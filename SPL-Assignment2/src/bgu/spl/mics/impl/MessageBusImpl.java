@@ -15,11 +15,11 @@ import java.util.Iterator;
 public class MessageBusImpl implements MessageBus{
 	
 	private Map<String, LinkedList<Message>> mapMicroServicesToQueues;
-	private Map<String,String> mapTypesToMicroServices;
+	private Map<String,LinkedList> mapTypesToMicroServices;
 	 
 	public MessageBusImpl(){
 		mapMicroServicesToQueues = new HashMap<String, LinkedList<Message>>();
-		mapTypesToMicroServices = new HashMap<String, String>();
+		mapTypesToMicroServices = new HashMap<String, LinkedList>();
 	}
 	
 	@Override
@@ -30,8 +30,19 @@ public class MessageBusImpl implements MessageBus{
      * @param m    the subscribing micro-service
      */
 	public void subscribeRequest(Class<? extends Request> type, MicroService m) {
-		// TODO Auto-generated method stub
-		
+		mapMicroServiceToType(type,m);
+	}
+	
+	private void mapMicroServiceToType(Class<? extends Message> type, MicroService m){
+		if(mapTypesToMicroServices.containsKey(type.toString())){ //if the type already exists in the map
+			LinkedList<String> microServicesSubscribedToTypeList = mapTypesToMicroServices.get(type.toString());
+			microServicesSubscribedToTypeList.add(m.getName());
+		}
+		else{ // if the type doesn't exist in the map
+			LinkedList<String> list = new LinkedList<String>();
+			list.add(m.getName());
+			mapTypesToMicroServices.put(type.toString(), list);
+		}
 	}
 
 	@Override
@@ -43,7 +54,7 @@ w    * <p>
      */
 	public void subscribeBroadcast(Class<? extends Broadcast> type, MicroService m) {
 		// TODO Auto-generated method stub
-		
+		mapMicroServiceToType(type,m);
 	}
 
 	@Override
