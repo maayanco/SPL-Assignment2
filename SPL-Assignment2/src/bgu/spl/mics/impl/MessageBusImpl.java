@@ -3,7 +3,11 @@ package bgu.spl.mics.impl;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+
 import bgu.spl.mics.Broadcast;
 import bgu.spl.mics.Message;
 import bgu.spl.mics.MessageBus;
@@ -14,12 +18,13 @@ import java.util.Iterator;
 
 public class MessageBusImpl implements MessageBus{
 	
-	private Map<String, LinkedList<Message>> mapMicroServicesToQueues;
-	private Map<String,LinkedList> mapTypesToMicroServices;
+	private Map<MicroService, LinkedBlockingQueue<Message>> mapMicroServicesToQueues;
+	private Map<Class<? extends Message>,LinkedList<MicroService>> mapTypesToMicroServices;
 	 
 	public MessageBusImpl(){
-		mapMicroServicesToQueues = new HashMap<String, LinkedList<Message>>();
-		mapTypesToMicroServices = new HashMap<String, LinkedList>();
+		//Remember this should be a thread safe singleton!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		mapMicroServicesToQueues = new HashMap<MicroService, LinkedBlockingQueue<Message>>();
+		mapTypesToMicroServices = new HashMap<Class<? extends Message>, LinkedList<MicroService>>();
 	}
 	
 	@Override
@@ -34,14 +39,15 @@ public class MessageBusImpl implements MessageBus{
 	}
 	
 	private void mapMicroServiceToType(Class<? extends Message> type, MicroService m){
-		if(mapTypesToMicroServices.containsKey(type.toString())){ //if the type already exists in the map
-			LinkedList<String> microServicesSubscribedToTypeList = mapTypesToMicroServices.get(type.toString());
-			microServicesSubscribedToTypeList.add(m.getName());
+		if(mapTypesToMicroServices.containsKey(type)){ //if the type already exists in the map
+			LinkedList<MicroService> microServicesSubscribedToTypeList = mapTypesToMicroServices.get(type); //get the linkedList
+			if(!microServicesSubscribedToTypeList.contains(m))
+				microServicesSubscribedToTypeList.add(m);
 		}
 		else{ // if the type doesn't exist in the map
-			LinkedList<String> list = new LinkedList<String>();
-			list.add(m.getName());
-			mapTypesToMicroServices.put(type.toString(), list);
+			LinkedList<MicroService> list = new LinkedList<MicroService>();
+			list.add(m);
+			mapTypesToMicroServices.put(type, list);
 		}
 	}
 
@@ -72,7 +78,7 @@ w    * <p>
      */
 	public <T> void complete(Request<T> r, T result) {
 		// TODO Auto-generated method stub
-		
+		//////////////////////////////////////////////////////////////////////////////TTTTTTTTTTOOOOOOOOOO DOOOOOOOOOOOO
 	}
 
 	@Override
@@ -83,10 +89,16 @@ w    * <p>
      * @param b the message to add to the queues.
      */
 	public void sendBroadcast(Broadcast b) {
-		// TODO Auto-generated method stub
-		
+		if(mapTypesToMicroServices.containsKey(b.getClass())){ //Check that the 
+			LinkedList<MicroService> list = mapTypesToMicroServices.get(b.getClass());
+			for(MicroService m : list){
+				LinkedBlockingQueue<Message> mQueue = getQueueByMicroService(m);
+				mQueue.add(b);
+			}
+		}
 	}
-
+	
+	
 	@Override
 	/**
      * add the {@link Request} {@code r} to the message queue of one of the
@@ -101,6 +113,7 @@ w    * <p>
 	public boolean sendRequest(Request<?> r, MicroService requester) {
 		// TODO Auto-generated method stub
 		return false;
+		//////////////////////////////////////////////////////////////////////////////TTTTTTTTTTOOOOOOOOOO DOOOOOOOOOOOO
 	}
 
 	@Override
@@ -110,8 +123,8 @@ w    * <p>
      * @param m the micro-service to create a queue for.
      */
 	public void register(MicroService m) {
-		LinkedList<Message> microServiceQueue = new LinkedList<Message>(); //creating the queue
-		mapMicroServicesToQueues.put(m.getName(), microServiceQueue);
+		LinkedBlockingQueue<Message> microServiceQueue = new LinkedBlockingQueue<Message>(); //creating the queue
+		mapMicroServicesToQueues.put(m, microServiceQueue);
 	}
 
 	@Override
@@ -125,8 +138,11 @@ w    * <p>
      */
 	public void unregister(MicroService m) {
 		//if the map contains an entry whose key is the m.name, then remove that entry
-		if(mapMicroServicesToQueues.containsKey(m.getName()))
-			mapMicroServicesToQueues.remove(m.getName());
+		if(mapMicroServicesToQueues.containsKey(m))
+			mapMicroServicesToQueues.remove(m);
+		//need to remove the queue from the mapTypesToMicroServices!!!!!!!!!!!!!!!!!
+		
+		removeMicroServiceFromType(m); ///PROBABLY NOT HEREEEEEEEEEEEEE!!!!!!!!!!!!!!!!!
 		
 	}
 
@@ -147,31 +163,34 @@ w    * <p>
      *                              to became available.
      */
 	public Message awaitMessage(MicroService m) throws InterruptedException {
-		if(!mapMicroServicesToQueues.containsKey(m.getName()))
+		if(!mapMicroServicesToQueues.containsKey(m))
 			throw new IllegalStateException();
-		LinkedList<Message> mQueue = getQueueByMicroServiceName(m.getName());
-	
-		 while (mQueue.isEmpty())
-	        {
-			 	this.wait();
-			 	//SHOULD ADD: Throw InterruptedException if interrupted while waiting for a message to become avaliable
-	            
-			 	/*try {
-	                this.wait();
-	            } catch (InterruptedException e) {} //not sure this is needed..
-*/	        }
-		 
-		 return mQueue.removeFirst();
 		
+		LinkedBlockingQueue<Message> mQueue = getQueueByMicroService(m);
+	
+		Message message = mQueue.take();
+		return message;
 	}
 	
+	//Currently not used
+	//Go over the mapTypesToMicroServices and delete the microService "m"
+	private void removeMicroServiceFromType(MicroService m){
+		Iterator it = mapTypesToMicroServices.entrySet().iterator();
+		while(it.hasNext()){
+			Map.Entry pair = (Map.Entry)it.next();
+			LinkedList<MicroService> lst = (LinkedList<MicroService>) pair.getValue();
+			if(lst.contains(m))
+				lst.remove(m);
+		}
+	}
 	
-	protected LinkedList<Message> getQueueByMicroServiceName(String name){
+	//Go over the mapMicroServiceToQueue, find the entry whose key is the provided microservice, and then return it's value (the queue)
+	private LinkedBlockingQueue<Message> getQueueByMicroService(MicroService m){
 		Iterator it = mapMicroServicesToQueues.entrySet().iterator();
 		while(it.hasNext()){
 			Map.Entry pair = (Map.Entry)it.next();
-			if(pair.getKey().equals(name))
-				return (LinkedList) pair.getValue();
+			if(pair.getKey().equals(m))
+				return (LinkedBlockingQueue<Message>) pair.getValue();
 		}
 		return null;
 	}
