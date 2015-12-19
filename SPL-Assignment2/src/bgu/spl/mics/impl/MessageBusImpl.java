@@ -14,17 +14,27 @@ import bgu.spl.mics.MessageBus;
 import bgu.spl.mics.MicroService;
 import bgu.spl.mics.Request;
 import bgu.spl.mics.RequestCompleted;
+import bgu.spl.mics.RoundRobinList;
+
 import java.util.Iterator;
 
 public class MessageBusImpl implements MessageBus{
 	
+	private final String MESSAGE_OF_TYPE_REQUEST="request";
+	private final String MESSAGE_OF_TYPE_BROADCAST="broadcast";
+	
 	private Map<MicroService, LinkedBlockingQueue<Message>> mapMicroServicesToQueues;
-	private Map<Class<? extends Message>,LinkedList<MicroService>> mapTypesToMicroServices;
-	 
+	private Map<Class<? extends Request>,RoundRobinList> mapRequestTypesToMicroServices;
+	private Map<Class<? extends Broadcast>,RoundRobinList> mapBroadcastTypesToMicroServices;
+	private Map<Request<?>,MicroService> mapRequestsToMicroServices;
+	
+	
 	public MessageBusImpl(){
 		//Remember this should be a thread safe singleton!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		mapMicroServicesToQueues = new HashMap<MicroService, LinkedBlockingQueue<Message>>();
-		mapTypesToMicroServices = new HashMap<Class<? extends Message>, LinkedList<MicroService>>();
+		mapRequestTypesToMicroServices = new HashMap<Class<? extends Request>, RoundRobinList>();
+		mapBroadcastTypesToMicroServices = new HashMap<Class<? extends Broadcast>,RoundRobinList>();
+		mapRequestsToMicroServices = new HashMap<Request<?>, MicroService>();
 	}
 	
 	@Override
@@ -35,22 +45,19 @@ public class MessageBusImpl implements MessageBus{
      * @param m    the subscribing micro-service
      */
 	public void subscribeRequest(Class<? extends Request> type, MicroService m) {
-		mapMicroServiceToType(type,m);
-	}
-	
-	private void mapMicroServiceToType(Class<? extends Message> type, MicroService m){
-		if(mapTypesToMicroServices.containsKey(type)){ //if the type already exists in the map
-			LinkedList<MicroService> microServicesSubscribedToTypeList = mapTypesToMicroServices.get(type); //get the linkedList
+		// Here we need to use only the mapBroadcastTypesToMicroServices
+		if(mapRequestTypesToMicroServices.containsKey(type)){ //if the type already exists in the map
+			RoundRobinList microServicesSubscribedToTypeList = mapRequestTypesToMicroServices.get(type); //get the linkedList
 			if(!microServicesSubscribedToTypeList.contains(m))
 				microServicesSubscribedToTypeList.add(m);
 		}
 		else{ // if the type doesn't exist in the map
-			LinkedList<MicroService> list = new LinkedList<MicroService>();
+			RoundRobinList list = new RoundRobinList();
 			list.add(m);
-			mapTypesToMicroServices.put(type, list);
-		}
+			mapRequestTypesToMicroServices.put(type, list);
+		}	
 	}
-
+	
 	@Override
 	/**
      * subscribes {@code m} to receive {@link Broadcast}s of type {@code type}.
@@ -59,9 +66,39 @@ w    * <p>
      * @param m    the subscribing micro-service
      */
 	public void subscribeBroadcast(Class<? extends Broadcast> type, MicroService m) {
-		// TODO Auto-generated method stub
-		mapMicroServiceToType(type,m);
+		// Here we need to use only the mapBroadcastTypesToMicroServices
+		if(mapBroadcastTypesToMicroServices.containsKey(type)){ //if the type already exists in the map
+			RoundRobinList microServicesSubscribedToTypeList = mapBroadcastTypesToMicroServices.get(type); //get the linkedList
+			if(!microServicesSubscribedToTypeList.contains(m))
+				microServicesSubscribedToTypeList.add(m);
+		}
+		else{ // if the type doesn't exist in the map
+			RoundRobinList list = new RoundRobinList();
+			list.add(m);
+			mapBroadcastTypesToMicroServices.put(type, list);
+		}
 	}
+	
+/*
+	private void tester(Class<? extends Message> type, MicroService m, String messageType){
+		Map<? extends Class<? extends Message>, RoundRobinList> mapTypesToMicroServices;
+		if(messageType.equals("Broadcast"))
+			mapTypesToMicroServices= mapBroadcastTypesToMicroServices;
+		else
+			mapTypesToMicroServices=mapRequestTypesToMicroServices;
+		
+		// Here we need to use only the mapBroadcastTypesToMicroServices
+				if(mapTypesToMicroServices.containsKey(type)){ //if the type already exists in the map
+					RoundRobinList microServicesSubscribedToTypeList = mapTypesToMicroServices.get(type); //get the linkedList
+					if(!microServicesSubscribedToTypeList.contains(m))
+						microServicesSubscribedToTypeList.add(m);
+				}
+				else{ // if the type doesn't exist in the map
+					RoundRobinList list = new RoundRobinList();
+					list.add(m);
+					mapTypesToMicroServices.put(type, list);
+				}
+	}*/
 
 	@Override
 	/**
@@ -77,10 +114,20 @@ w    * <p>
      * @param result the result of the completed request
      */
 	public <T> void complete(Request<T> r, T result) {
+		//this method notifies the message bus that the request r is completed and it's result was the result.
+		//when this method is called, the message bus will add the requestCompleted message to the queue of 
+		//the requesting microService. 
+		//we need to save a map that will map between the microServices and the requests
+		
+		//first thing we need to do is find out who was the microService that requested the request r
+		MicroService m = mapRequestsToMicroServices.get(r);
+		LinkedBlockingQueue mQueue = mapMicroServicesToQueues.get(m);
+		mQueue.add(new RequestCompleted<T>(r, result));
+		
 		// TODO Auto-generated method stub
-		//////////////////////////////////////////////////////////////////////////////TTTTTTTTTTOOOOOOOOOO DOOOOOOOOOOOO
-	}
+ 	}
 
+	
 	@Override
 	/**
      * add the {@link Broadcast} {@code b} to the message queues of all the
@@ -89,15 +136,16 @@ w    * <p>
      * @param b the message to add to the queues.
      */
 	public void sendBroadcast(Broadcast b) {
-		if(mapTypesToMicroServices.containsKey(b.getClass())){ //Check that the 
-			LinkedList<MicroService> list = mapTypesToMicroServices.get(b.getClass());
-			for(MicroService m : list){
+		if(mapBroadcastTypesToMicroServices.containsKey(b.getClass())){ //Check that the 
+			RoundRobinList list = mapBroadcastTypesToMicroServices.get(b.getClass());
+			Iterator it = list.iterator();
+			while(it.hasNext()){
+				MicroService m = (MicroService)it.next();
 				LinkedBlockingQueue<Message> mQueue = getQueueByMicroService(m);
 				mQueue.add(b);
 			}
 		}
 	}
-	
 	
 	@Override
 	/**
@@ -110,10 +158,28 @@ w    * <p>
      * @return true if there was at least one micro-service subscribed to
      *         {@code r.getClass()} and false otherwise.
      */
-	public boolean sendRequest(Request<?> r, MicroService requester) {
-		// TODO Auto-generated method stub
-		return false;
-		//////////////////////////////////////////////////////////////////////////////TTTTTTTTTTOOOOOOOOOO DOOOOOOOOOOOO
+	public boolean sendRequest(Request<?> r, MicroService requester) {		
+		RoundRobinList list = mapRequestTypesToMicroServices.get(r.getClass());
+		
+		if(list.isEmpty())
+			return false;
+		
+		MicroService m = (MicroService)list.getNext();
+		LinkedBlockingQueue<Message> mQueue = mapMicroServicesToQueues.get(m);
+		mQueue.add(r);
+		
+		//map the request to the microService
+		if(!mapRequestsToMicroServices.containsKey(r)){
+			mapRequestsToMicroServices.put(r, requester);
+			return true;
+		}
+		else{
+			//this is bad!! how can it be that this request is already mapped to this microservice??
+			//log this as bad!!
+			return false;
+		}
+		
+		
 	}
 
 	@Override
@@ -142,9 +208,13 @@ w    * <p>
 			mapMicroServicesToQueues.remove(m);
 		//need to remove the queue from the mapTypesToMicroServices!!!!!!!!!!!!!!!!!
 		
-		removeMicroServiceFromType(m); ///PROBABLY NOT HEREEEEEEEEEEEEE!!!!!!!!!!!!!!!!!
+		removeMicroServiceFromBroadcasts(m); ///PROBABLY NOT HEREEEEEEEEEEEEE!!!!!!!!!!!!!!!!!
+		removeMicroServiceFromRequests(m); ///PROBABLY NOT HEREEEEEEEEEEEEE!!!!!!!!!!!!!!!!!
 		
 	}
+	
+	
+	
 
 	@Override
 	/**
@@ -174,8 +244,20 @@ w    * <p>
 	
 	//Currently not used
 	//Go over the mapTypesToMicroServices and delete the microService "m"
-	private void removeMicroServiceFromType(MicroService m){
-		Iterator it = mapTypesToMicroServices.entrySet().iterator();
+	private void removeMicroServiceFromBroadcasts(MicroService m){
+		
+		Iterator it = mapBroadcastTypesToMicroServices.entrySet().iterator();
+		while(it.hasNext()){
+			Map.Entry pair = (Map.Entry)it.next();
+			LinkedList<MicroService> lst = (LinkedList<MicroService>) pair.getValue();
+			if(lst.contains(m))
+				lst.remove(m);
+		}
+	}
+	
+	private void removeMicroServiceFromRequests(MicroService m){
+		
+		Iterator it = mapRequestTypesToMicroServices.entrySet().iterator();
 		while(it.hasNext()){
 			Map.Entry pair = (Map.Entry)it.next();
 			LinkedList<MicroService> lst = (LinkedList<MicroService>) pair.getValue();
