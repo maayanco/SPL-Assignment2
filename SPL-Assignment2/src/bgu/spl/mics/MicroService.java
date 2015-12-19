@@ -1,5 +1,12 @@
 package bgu.spl.mics;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import bgu.spl.mics.impl.MessageBusImpl;
+
 /**
  * The MicroService is an abstract class that any micro-service in the system
  * must extend. The abstract MicroService class is responsible to get and
@@ -18,7 +25,12 @@ package bgu.spl.mics;
  * <p>
  */
 public abstract class MicroService implements Runnable {
-
+	
+	//somewhere we need to store a map of callbacks to message types or something like that or the other way around..
+	private static final Logger log = Logger.getLogger( MessageBusImpl.class.getName() );
+	private static final MessageBus messageBusInstance = MessageBusImpl.getInstance();
+	private Map<Class<? extends Request>, Callback<? extends Request>> mapRequestTypesToCallbacks = new HashMap<Class<? extends Request>, Callback<? extends Request>>();
+	private Map<Class<? extends Broadcast>, Callback<? extends Broadcast>> mapBroadcastTypesToCallbacks = new HashMap<Class<? extends Broadcast>, Callback<? extends Broadcast>>();
     private boolean terminated = false;
     private final String name;
 
@@ -27,6 +39,7 @@ public abstract class MicroService implements Runnable {
      *             does not have to be unique)
      */
     public MicroService(String name) {
+    	
         this.name = name;
     }
 
@@ -51,7 +64,12 @@ public abstract class MicroService implements Runnable {
      *                 queue.
      */
     protected final <R extends Request> void subscribeRequest(Class<R> type, Callback<R> callback) {
-        //TODO: implement this.
+    	log.log(Level.INFO, "subscribeRequest method was invoked with parameters:"+type+" , "+callback);
+    	
+    	messageBusInstance.subscribeRequest(type, this);
+    	mapRequestTypesToCallbacks.put(type, callback);
+    	
+    	log.log(Level.INFO, this.getName()+" MicroService has succsessfully subscribed to the Request type: "+type);
     }
 
     /**
@@ -76,7 +94,13 @@ public abstract class MicroService implements Runnable {
      *                 queue.
      */
     protected final <B extends Broadcast> void subscribeBroadcast(Class<B> type, Callback<B> callback) {
-        //TODO: implement this.
+        log.log(Level.INFO, "subscribeBroadcast method was invoked with parameters:"+type+" , "+callback);
+    	
+        messageBusInstance.subscribeBroadcast(type, this);
+    	mapBroadcastTypesToCallbacks.put(type, callback);
+    	
+    	log.log(Level.INFO, this.getName()+" MicroService has succsessfully subscribed to the Broadcast type: "+type);
+    	
     }
 
     /**
@@ -96,6 +120,9 @@ public abstract class MicroService implements Runnable {
      *         {@code r.getClass()} and false otherwise.
      */
     protected final <T> boolean sendRequest(Request<T> r, Callback<T> onComplete) {
+    	log.log(Level.INFO, "sendRequest method was invoked with parameters "+r+" , "+onComplete);
+    	
+    	
         //TODO: implement this.
         return false; //TODO: delete this line :)
     }
@@ -106,7 +133,12 @@ public abstract class MicroService implements Runnable {
      * @param b the broadcast message to send
      */
     protected final void sendBroadcast(Broadcast b) {
-        //TODO: implement this.
+    	log.log(Level.INFO, "sendBroadcast method was invoked with parameters:"+b);
+    	
+        messageBusInstance.sendBroadcast(b);
+        
+        log.log(Level.INFO, "The MicroService "+this.getName()+" has initiated sending broadcast "+b);
+        
     }
 
     /**

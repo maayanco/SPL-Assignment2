@@ -63,7 +63,6 @@ public class MessageBusImpl implements MessageBus{
 	public void subscribeRequest(Class<? extends Request> type, MicroService m) {
 		log.log(Level.INFO, "subscribeRequest method was invoked with parameters: "+type+", "+m); //Logger
 		
-		
 		// Here we need to use only the mapBroadcastTypesToMicroServices
 		if(mapRequestTypesToMicroServices.containsKey(type)){ //if the type already exists in the map
 			RoundRobinList microServicesSubscribedToTypeList = mapRequestTypesToMicroServices.get(type); //get the linkedList
