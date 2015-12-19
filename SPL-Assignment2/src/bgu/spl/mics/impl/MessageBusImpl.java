@@ -28,6 +28,13 @@ public class MessageBusImpl implements MessageBus{
 	private Map<Class<? extends Broadcast>,RoundRobinList> mapBroadcastTypesToMicroServices;
 	private Map<Request<?>,MicroService> mapRequestsToMicroServices;
 	
+	private static class SingletonHolder {
+        private static MessageBusImpl instance = new MessageBusImpl();
+    }
+	
+	public static MessageBusImpl getInstance() {
+        return SingletonHolder.instance;
+    }
 	
 	public MessageBusImpl(){
 		//Remember this should be a thread safe singleton!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
