@@ -194,7 +194,12 @@ w    * <p>
      *         {@code r.getClass()} and false otherwise.
      */
 	public boolean sendRequest(Request<?> r, MicroService requester) {
-		log.log(Level.INFO, "sendRequest method was invoked with parameters: "+r+", "+requester); //Logger
+		log.log(Level.INFO, "sendRequest method was invoked"); //Logger
+		
+		if(!mapRequestTypesToMicroServices.containsKey(r.getClass())){
+			log.log(Level.WARNING, "couldn't send request, the type of the request wasn't found");
+			return false;
+		}
 		
 		RoundRobinList list = mapRequestTypesToMicroServices.get(r.getClass());
 		
@@ -289,7 +294,7 @@ w    * <p>
 		log.log(Level.INFO, "awaitMessage method was invoked with parameters: "+m); //Logger
 		
 		if(!mapMicroServicesToQueues.containsKey(m)){
-			log.log(Level.SEVERE, "No queue was found matching the MicroService "+m, new IllegalStateException()); //should there be the exception?? or the line after?? am i doing the same thing twice??
+			//log.log(Level.SEVERE, "No queue was found matching the MicroService "+m, new IllegalStateException()); //should there be the exception?? or the line after?? am i doing the same thing twice??
 			throw new IllegalStateException();
 		}
 		

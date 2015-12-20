@@ -39,7 +39,7 @@ public abstract class MicroService implements Runnable {
 	 *             does not have to be unique)
 	 */
 	public MicroService(String name) {
-
+		messageBusInstance.register(this);
 		this.name = name;
 	}
 
@@ -182,7 +182,7 @@ public abstract class MicroService implements Runnable {
 	}
 
 	/**
-	 * the entry point of the micro-service. TODO: you must complete this code
+	 * the entry point of the micro-service. 
 	 * otherwise you will end up in an infinite loop.
 	 */
 	@Override
@@ -211,6 +211,7 @@ public abstract class MicroService implements Runnable {
 			}
 			
 		}
+		messageBusInstance.unregister(this); 
 	}
 
 }
