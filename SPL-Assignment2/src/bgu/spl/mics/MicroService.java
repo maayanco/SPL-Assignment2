@@ -64,12 +64,12 @@ public abstract class MicroService implements Runnable {
 	 *                 queue.
 	 */
 	protected final <R extends Request> void subscribeRequest(Class<R> type, Callback<R> callback) {
-		log.log(Level.INFO, "subscribeRequest method was invoked with parameters:"+type+" , "+callback);
+		/*log.log(Level.INFO, "subscribeRequest method was invoked with parameters:"+type+" , "+callback);*/
 
 		messageBusInstance.subscribeRequest(type, this);
 		mapMessageTypesToCallbacks.put(type, callback);
 
-		log.log(Level.INFO, this.getName()+" MicroService has succsessfully subscribed to the Request type: "+type);
+		/*log.log(Level.INFO, this.getName()+" MicroService has succsessfully subscribed to the Request type: "+type);*/
 	}
 
 	/**
@@ -94,12 +94,12 @@ public abstract class MicroService implements Runnable {
 	 *                 queue.
 	 */
 	protected final <B extends Broadcast> void subscribeBroadcast(Class<B> type, Callback<B> callback) {
-		log.log(Level.INFO, "subscribeBroadcast method was invoked with parameters:"+type+" , "+callback);
+		/*log.log(Level.INFO, "subscribeBroadcast method was invoked with parameters:"+type+" , "+callback);*/
 
 		messageBusInstance.subscribeBroadcast(type, this);
 		mapMessageTypesToCallbacks.put(type, callback);
 
-		log.log(Level.INFO, this.getName()+" MicroService has succsessfully subscribed to the Broadcast type: "+type);
+		/*log.log(Level.INFO, this.getName()+" MicroService has succsessfully subscribed to the Broadcast type: "+type);*/
 
 	}
 
@@ -120,7 +120,7 @@ public abstract class MicroService implements Runnable {
 	 *         {@code r.getClass()} and false otherwise.
 	 */
 	protected final <T> boolean sendRequest(Request<T> r, Callback<T> onComplete) {
-		log.log(Level.INFO, "sendRequest method was invoked with parameters "+r+" , "+onComplete);
+		/*log.log(Level.INFO, "sendRequest method was invoked with parameters "+r+" , "+onComplete);*/
 
 		Boolean bol = messageBusInstance.sendRequest(r, this);
 		mapRequestsToCallbacks.put(r, onComplete); //should we do this only if bol is true?
@@ -134,11 +134,11 @@ public abstract class MicroService implements Runnable {
 	 * @param b the broadcast message to send
 	 */
 	protected final void sendBroadcast(Broadcast b) {
-		log.log(Level.INFO, "sendBroadcast method was invoked with parameters:"+b);
+		/*log.log(Level.INFO, "sendBroadcast method was invoked with parameters:"+b);*/
 
 		messageBusInstance.sendBroadcast(b);
 
-		log.log(Level.INFO, "The MicroService "+this.getName()+" has initiated sending broadcast "+b);
+		/*log.log(Level.INFO, "The MicroService "+this.getName()+" has initiated sending broadcast "+b);*/
 
 	}
 
@@ -153,7 +153,7 @@ public abstract class MicroService implements Runnable {
 	 *               {@code r}.
 	 */
 	protected final <T> void complete(Request<T> r, T result) {
-		log.log(Level.INFO, "complete method was invoked with parameters:"+r+" , "+result);
+		/*log.log(Level.INFO, "complete method was invoked with parameters:"+r+" , "+result);*/
 
 		messageBusInstance.complete(r, result);
 
@@ -187,25 +187,34 @@ public abstract class MicroService implements Runnable {
 	 */
 	@Override
 	public final void run() {
+		
 		initialize();
 		while (!terminated) {
 			try {
 				Message m = messageBusInstance.awaitMessage(this);
-				if(mapMessageTypesToCallbacks.containsKey(m.getClass())){
-					Callback callback = mapMessageTypesToCallbacks.get(m.getClass());
-					if(m.getClass().equals("RequestCompleted")){
-						callback.call(((RequestCompleted)m).getResult());
+				Class[] y = m.getClass().getInterfaces();
+				
+					if(y[0].getName().equals("bgu.spl.mics.Message")){ //RequestCompleted
+						RequestCompleted r = (RequestCompleted)m;
+						Callback callback = mapRequestsToCallbacks.get(r.getCompletedRequest());
+						callback.call(r.getResult());
 					}
-					else if(m.getClass().equals("Request")){
-						callback.call(m);
+					else if(y[0].getName().equals("bgu.spl.mics.Request") || y[0].getName().equals("bgu.spl.mics.Broadcast")){
+						if(!mapMessageTypesToCallbacks.containsKey(m.getClass()))
+							log.log(Level.WARNING, "Callback was not found for the message: "+m);
+						else{
+							Callback callback = mapMessageTypesToCallbacks.get(m.getClass());
+							callback.call(m);
+						}
 					}
-					else{
+					else {
 						//DONT KNOW WHAT TO DO WITH BROADCASTS..
+						System.out.println("damn");
 					}
-				}
-				else{
-					log.log(Level.WARNING, "Callback was not found for the message: "+m);
-				}
+				
+				
+					/*log.log(Level.WARNING, "Callback was not found for the message: "+m);*/
+				
 			} catch (InterruptedException e) {
 				System.out.println("damn"); //NNNNNNNNNNEED TO DELETEEE!
 			}

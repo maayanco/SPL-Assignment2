@@ -41,17 +41,20 @@ public class MessageBusImpl implements MessageBus{
     }
 	
 	public MessageBusImpl(){
-		log.log(Level.INFO, "MessageBusImpl Constructor was invoked"); //Logger
-		
+		/*log.log(Level.INFO, "MessageBusImpl Constructor was invoked"); //Logger
+*/		
 		//Remember this should be a thread safe singleton!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		mapMicroServicesToQueues = new HashMap<MicroService, LinkedBlockingQueue<Message>>();
 		mapRequestTypesToMicroServices = new HashMap<Class<? extends Request>, RoundRobinList>();
 		mapBroadcastTypesToMicroServices = new HashMap<Class<? extends Broadcast>,RoundRobinList>();
 		mapRequestsToMicroServices = new HashMap<Request<?>, MicroService>();
 		
-		log.log(Level.INFO, " 'MessageBusImpl' has been initialized"); //Logger
-	}
+		/*log.log(Level.INFO, " 'MessageBusImpl' has been initialized"); //Logger
+*/	}
 	
+	/*private void print map(){
+		for(int i=0; i<)
+	}*/
 	@Override
 	/**
      * subscribes {@code m} to receive {@link Request}s of type {@code type}.
@@ -61,24 +64,25 @@ public class MessageBusImpl implements MessageBus{
      */
 	//we map the requests types! to the micro services
 	public void subscribeRequest(Class<? extends Request> type, MicroService m) {
-		log.log(Level.INFO, "subscribeRequest method was invoked with parameters: "+type+", "+m); //Logger
-		
+		/*log.log(Level.INFO, "subscribeRequest method was invoked with parameters: "+type+", "+m); //Logger
+*/		
 		// Here we need to use only the mapBroadcastTypesToMicroServices
 		if(mapRequestTypesToMicroServices.containsKey(type)){ //if the type already exists in the map
 			RoundRobinList microServicesSubscribedToTypeList = mapRequestTypesToMicroServices.get(type); //get the linkedList
 			if(!microServicesSubscribedToTypeList.contains(m)){
 				microServicesSubscribedToTypeList.add(m);
-				log.log(Level.INFO, "The microService "+m+" sucsessfully subscribed to the request type "+type);
+				/*log.log(Level.INFO, "The microService "+m+" sucsessfully subscribed to the request type "+type);*/
 			}
-			else
-				log.log(Level.WARNING, "Attempt to subscribe the MicroService "+m.toString()+" to the request type "+type.toString()+" aborted,"+m+" is already subscribed");
+			else{
+				/*log.log(Level.WARNING, "Attempt to subscribe the MicroService "+m.toString()+" to the request type "+type.toString()+" aborted,"+m+" is already subscribed");*/
+			}
 		}
 		else{ // if the type doesn't exist in the map
 			RoundRobinList list = new RoundRobinList();
 			list.add(m);
 			mapRequestTypesToMicroServices.put(type, list);
 			
-			log.log(Level.INFO, "The microService "+m+" sucsessfully subscribed to the request type "+type);
+			/*log.log(Level.INFO, "The microService "+m+" sucsessfully subscribed to the request type "+type);*/
 		}	
 	}
 	
@@ -90,25 +94,25 @@ w    * <p>
      * @param m    the subscribing micro-service
      */
 	public void subscribeBroadcast(Class<? extends Broadcast> type, MicroService m) {
-		log.log(Level.INFO, "subscribeBroadcast method was invoked with parameters: "+type+", "+m); //Logger
-		
+		/*log.log(Level.INFO, "subscribeBroadcast method was invoked with parameters: "+type+", "+m); //Logger
+*/		
 		
 		// Here we need to use only the mapBroadcastTypesToMicroServices
 		if(mapBroadcastTypesToMicroServices.containsKey(type)){ //if the type already exists in the map
 			RoundRobinList microServicesSubscribedToTypeList = mapBroadcastTypesToMicroServices.get(type); //get the linkedList
 			if(!microServicesSubscribedToTypeList.contains(m)){
 				microServicesSubscribedToTypeList.add(m);
-				log.log(Level.INFO, "The microService "+m+" sucsessfully subscribed to the broadcast type "+type.toString());
+				/*log.log(Level.INFO, "The microService "+m+" sucsessfully subscribed to the broadcast type "+type.toString());*/
 			}
-			else
-				log.log(Level.WARNING, "Attempt to subscribe the MicroService "+m.toString()+" to the Broadcast type "+type.toString()+" aborted,"+m+" is already subscribed");
-		
+			else{
+			/*	log.log(Level.WARNING, "Attempt to subscribe the MicroService "+m.toString()+" to the Broadcast type "+type.toString()+" aborted,"+m+" is already subscribed");*/
+			}
 		}
 		else{ // if the type doesn't exist in the map
 			RoundRobinList list = new RoundRobinList();
 			list.add(m);
 			mapBroadcastTypesToMicroServices.put(type, list);
-			log.log(Level.INFO, "The microService "+m+" sucsessfully subscribed to the broadcast type "+type.toString());
+			/*log.log(Level.INFO, "The microService "+m+" sucsessfully subscribed to the broadcast type "+type.toString());*/
 		}
 	}
 	
@@ -147,14 +151,14 @@ w    * <p>
      * @param result the result of the completed request
      */
 	public <T> void complete(Request<T> r, T result) {
-		log.log(Level.INFO, "complete method was invoked with parameters: "+r+", "+result);
+		/*log.log(Level.INFO, "complete method was invoked with parameters: "+r+", "+result);*/
 		
 		
 		MicroService m = mapRequestsToMicroServices.get(r);
 		LinkedBlockingQueue mQueue = mapMicroServicesToQueues.get(m);
 		mQueue.add(new RequestCompleted<T>(r, result));
 		
-		log.log(Level.INFO, "RequestCompleted message was sucsessfully added to the queue of the "+m+" MicroService who sent the request");
+		/*log.log(Level.INFO, "RequestCompleted message was sucsessfully added to the queue of the "+m+" MicroService who sent the request");*/
  	}
 
 	
@@ -166,8 +170,8 @@ w    * <p>
      * @param b the message to add to the queues.
      */
 	public void sendBroadcast(Broadcast b) {
-		log.log(Level.INFO, "sendBroadcast method was invoked with parameter: "+b); //Logger
-		
+		/*log.log(Level.INFO, "sendBroadcast method was invoked with parameter: "+b); //Logger
+*/		
 		if(mapBroadcastTypesToMicroServices.containsKey(b.getClass())){ //Check that the 
 			RoundRobinList list = mapBroadcastTypesToMicroServices.get(b.getClass());
 			Iterator it = list.iterator();
@@ -175,11 +179,12 @@ w    * <p>
 				MicroService m = (MicroService)it.next();
 				LinkedBlockingQueue<Message> mQueue = getQueueByMicroService(m);
 				mQueue.add(b);
-				log.log(Level.INFO, "The broadcast "+b+" has been succsessfully added to the queue of the MicroService "+m);
+				/*log.log(Level.INFO, "The broadcast "+b+" has been succsessfully added to the queue of the MicroService "+m);*/
 			}
 		}
-		else
-			log.log(Level.WARNING, "The type "+b.getClass()+" wasn't found in the mapBroadcastTypesToMicroServices - unable to send broadcast");
+		else{
+			/*log.log(Level.WARNING, "The type "+b.getClass()+" wasn't found in the mapBroadcastTypesToMicroServices - unable to send broadcast");*/
+		}
 	}
 	
 	@Override
@@ -194,17 +199,18 @@ w    * <p>
      *         {@code r.getClass()} and false otherwise.
      */
 	public boolean sendRequest(Request<?> r, MicroService requester) {
-		log.log(Level.INFO, "sendRequest method was invoked"); //Logger
+		/*log.log(Level.INFO, "sendRequest method was invoked"); //Logger
+*/		
 		
 		if(!mapRequestTypesToMicroServices.containsKey(r.getClass())){
-			log.log(Level.WARNING, "couldn't send request, the type of the request wasn't found");
+			/*log.log(Level.WARNING, "couldn't send request, the type of the request wasn't found");*/
 			return false;
 		}
 		
 		RoundRobinList list = mapRequestTypesToMicroServices.get(r.getClass());
 		
 		if(list.isEmpty()){
-			log.log(Level.INFO," No MicroServices are subscribed to the request "+r+" sending was aborted");
+			/*log.log(Level.INFO," No MicroServices are subscribed to the request "+r+" sending was aborted");*/
 			return false;
 		}
 		
@@ -212,16 +218,16 @@ w    * <p>
 		LinkedBlockingQueue<Message> mQueue = mapMicroServicesToQueues.get(m);
 		mQueue.add(r);
 		
-		log.log(Level.INFO, "");
+		/*log.log(Level.INFO, "");*/
 		
 		//map the request to the microService
 		if(!mapRequestsToMicroServices.containsKey(r)){
 			mapRequestsToMicroServices.put(r, requester);
-			log.log(Level.INFO, "MicroService "+m+" was succsessfully mapped to the request "+r);
+			/*log.log(Level.INFO, "MicroService "+m+" was succsessfully mapped to the request "+r);*/
 			return true;
 		}
 		else{
-			log.log(Level.WARNING, "MicroService "+m+" is already mapped to the request "+r);
+			/*log.log(Level.WARNING, "MicroService "+m+" is already mapped to the request "+r);*/
 			return false; //should we return false in this scenario?
 		}
 		
@@ -235,13 +241,13 @@ w    * <p>
      * @param m the micro-service to create a queue for.
      */
 	public void register(MicroService m) {
-		log.log(Level.INFO, "register method was invoked with parameters: "+m); //Logger
-		
+		/*log.log(Level.INFO, "register method was invoked with parameters: "+m); //Logger
+*/		
 		LinkedBlockingQueue<Message> microServiceQueue = new LinkedBlockingQueue<Message>(); //creating the queue
 		mapMicroServicesToQueues.put(m, microServiceQueue);
 		
-		log.log(Level.INFO, "Queue was succsessfully created and mapped to the MicroService "+m); //Logger
-	}
+		/*log.log(Level.INFO, "Queue was succsessfully created and mapped to the MicroService "+m); //Logger
+*/	}
 
 	@Override
 	/**
@@ -253,18 +259,17 @@ w    * <p>
      * @param m the micro-service to unregister.
      */
 	public void unregister(MicroService m) {
-		log.log(Level.INFO, "unregister method was invoked with parameters: "+m); //Logger
-		
+		/*log.log(Level.INFO, "unregister method was invoked with parameters: "+m); //Logger
+*/		
 		//if the map contains an entry whose key is the m.name, then remove that entry
 		if(mapMicroServicesToQueues.containsKey(m)){
 			mapMicroServicesToQueues.remove(m);
-			log.log(Level.INFO, "MicroService "+m+" was sucsessfully removed from the mapMicroServicesToQueues");
+			/*log.log(Level.INFO, "MicroService "+m+" was sucsessfully removed from the mapMicroServicesToQueues");*/
 		}
-		else
-			log.log(Level.WARNING, "MicroService "+m+"was not found in the mapMicroServicesToQueues");
+		else{
+			/*log.log(Level.WARNING, "MicroService "+m+"was not found in the mapMicroServicesToQueues");*/
+		}
 		//need to remove the queue from the mapTypesToMicroServices!!!!!!!!!!!!!!!!!
-		
-		
 		
 		removeMicroServiceFromBroadcasts(m); ///PROBABLY NOT HEREEEEEEEEEEEEE!!!!!!!!!!!!!!!!!
 		removeMicroServiceFromRequests(m); ///PROBABLY NOT HEREEEEEEEEEEEEE!!!!!!!!!!!!!!!!!
@@ -291,8 +296,8 @@ w    * <p>
      *                              to became available.
      */
 	public Message awaitMessage(MicroService m) throws InterruptedException {
-		log.log(Level.INFO, "awaitMessage method was invoked with parameters: "+m); //Logger
-		
+		/*log.log(Level.INFO, "awaitMessage method was invoked with parameters: "+m); //Logger
+*/		
 		if(!mapMicroServicesToQueues.containsKey(m)){
 			//log.log(Level.SEVERE, "No queue was found matching the MicroService "+m, new IllegalStateException()); //should there be the exception?? or the line after?? am i doing the same thing twice??
 			throw new IllegalStateException();
@@ -300,66 +305,70 @@ w    * <p>
 		
 		LinkedBlockingQueue<Message> mQueue = getQueueByMicroService(m);
 		Message message = mQueue.take();
-		log.log(Level.INFO, "Message was received from the queue of the MicroService "+m );
+		/*log.log(Level.INFO, "Message was received from the queue of the MicroService "+m );*/
 		return message;
 	}
 	
 	//Currently not used
 	//Go over the mapTypesToMicroServices and delete the microService "m"
 	private void removeMicroServiceFromBroadcasts(MicroService m){
-		log.log(Level.INFO, "removeMicroServiceFromBroadcasts method was invoked with parameters: "+m); //Logger
-		
+		/*log.log(Level.INFO, "removeMicroServiceFromBroadcasts method was invoked with parameters: "+m); //Logger
+*/		
 		Boolean isFound=false;
 		Iterator it = mapBroadcastTypesToMicroServices.entrySet().iterator();
 		while(it.hasNext()){
 			Map.Entry pair = (Map.Entry)it.next();
-			LinkedList<MicroService> lst = (LinkedList<MicroService>) pair.getValue();
+			RoundRobinList lst = (RoundRobinList)pair.getValue();
 			if(lst.contains(m)){
 				lst.remove(m);
 				isFound=true;
 			}
 		}
 		
-		if(isFound)
-			log.log(Level.INFO, "MicroService "+m+" was succsessfully unsubscribed from all Broadcast types"); //Logger
-		else
-			log.log(Level.INFO, "Attempt to unsubscribe the MicroService "+m+" from all broadcast types aborted - the microservice was not subscribed to a broadcast type");
-			
+		if(isFound){
+			/*log.log(Level.INFO, "MicroService "+m+" was succsessfully unsubscribed from all Broadcast types"); //Logger
+*/		}
+		else{
+			/*log.log(Level.INFO, "Attempt to unsubscribe the MicroService "+m+" from all broadcast types aborted - the microservice was not subscribed to a broadcast type");*/
+		}
 	}
 	
 	private void removeMicroServiceFromRequests(MicroService m){
-		log.log(Level.INFO, "removeMicroServiceFromRequests method was invoked with parameters: "+m); //Logger
-		
+		/*log.log(Level.INFO, "removeMicroServiceFromRequests method was invoked with parameters: "+m); //Logger
+*/		
 		Boolean isFound=false;
 		Iterator it = mapRequestTypesToMicroServices.entrySet().iterator();
 		while(it.hasNext()){
 			Map.Entry pair = (Map.Entry)it.next();
-			LinkedList<MicroService> lst = (LinkedList<MicroService>) pair.getValue();
+			RoundRobinList lst = (RoundRobinList)pair.getValue();
+			//Iterator listIt = lst.iterator();
 			if(lst.contains(m)){
 				lst.remove(m);
 				isFound=true;
 			}
 		}
 		
-		if(isFound)
-			log.log(Level.INFO, "MicroService "+m+" was succsessfully unsubscribed from all request types"); //Logger
-		else
-			log.log(Level.INFO, "Attempt to unsubscribe the MicroService "+m+" from all request types aborted - the microservice was not subscribed to a request type");
+		if(isFound){
+			/*log.log(Level.INFO, "MicroService "+m+" was succsessfully unsubscribed from all request types"); //Logger
+*/		}
+		else{
+			/*log.log(Level.INFO, "Attempt to unsubscribe the MicroService "+m+" from all request types aborted - the microservice was not subscribed to a request type");*/
+		}
 	}
 	
 	//Go over the mapMicroServiceToQueue, find the entry whose key is the provided microservice, and then return it's value (the queue)
 	private LinkedBlockingQueue<Message> getQueueByMicroService(MicroService m){
-		log.log(Level.INFO, "getQueueByMicroService method was invoked with parameters: "+m); //Logger
-		
+		/*log.log(Level.INFO, "getQueueByMicroService method was invoked with parameters: "+m); //Logger
+*/		
 		Iterator it = mapMicroServicesToQueues.entrySet().iterator();
 		while(it.hasNext()){
 			Map.Entry pair = (Map.Entry)it.next();
 			if(pair.getKey().equals(m)){
-				log.log(Level.INFO, "The queue of the MicroService "+m+" has been located and returned");
+				/*log.log(Level.INFO, "The queue of the MicroService "+m+" has been located and returned");*/
 				return (LinkedBlockingQueue<Message>) pair.getValue();
 			}
 		}
-		log.log(Level.WARNING, "The queue of the MicroService "+m+" was not found");
+		/*log.log(Level.WARNING, "The queue of the MicroService "+m+" was not found");*/
 		return null;
 	}
 

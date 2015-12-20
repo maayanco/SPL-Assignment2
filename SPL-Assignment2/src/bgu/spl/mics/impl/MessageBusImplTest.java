@@ -9,19 +9,46 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import bgu.spl.mics.MicroService;
+import bgu.spl.mics.Request;
+import bgu.spl.mics.Broadcast;
 
 public class MessageBusImplTest {
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
-		//create a new MicroService?
+		
+		class MicroServiceImpl extends MicroService{
+
+			public MicroServiceImpl(String name) {
+				super(name);
+				// TODO Auto-generated constructor stub
+			}
+
+			@Override
+			protected void initialize() {
+				//here i will write to what types of messages i am subscribed to 
+			}
+			
+		}
+		
+		class RequestImpl implements Request<String>{
+			
+		}
+		
+		class BroadcastImpl implements Broadcast{
+			
+		}
+		
+		
+		Request<?> r = new RequestImpl();
+		Broadcast b = new BroadcastImpl();
 	}
 
-	@AfterClass
+	/*@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-	}
+	}*/
 
-	@Before
+	/*@Before
 	public void setUp() throws Exception {
 	}
 
@@ -33,19 +60,18 @@ public class MessageBusImplTest {
 	public void testGetInstance() {
 		fail("Not yet implemented");
 	}
-
-	@Test
+*/
+	/*@Test
 	public void testMessageBusImpl() {
 		fail("Not yet implemented");
 	}
-
+*/
 	
-	//This is where it get's interesting!!!!!!!!
 	
 	
 	@Test
 	public void testSubscribeRequest() {
-		//here what i want to do is 
+		
 		fail("Not yet implemented");
 	}
 
