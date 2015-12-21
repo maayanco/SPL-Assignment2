@@ -156,6 +156,9 @@ w    * <p>
 		
 		MicroService m = mapRequestsToMicroServices.get(r);
 		LinkedBlockingQueue mQueue = mapMicroServicesToQueues.get(m);
+		if(mQueue==null){
+			System.out.println("damnnn");
+		}
 		mQueue.add(new RequestCompleted<T>(r, result));
 		
 		/*log.log(Level.INFO, "RequestCompleted message was sucsessfully added to the queue of the "+m+" MicroService who sent the request");*/
