@@ -1,6 +1,11 @@
 package bgu.spl.app;
 
-public class Receipt {
+import bgu.spl.mics.Request;
+
+public class ManufacturingOrderRequest implements Request<Receipt> {
+	
+	//not real!!
+	
 	private String seller;
 	private String customer;
 	private String shoeType;
@@ -9,15 +14,15 @@ public class Receipt {
 	private int requestTick;
 	private int amountSold;
 	
-	public Receipt(String seller, String customer, String shoeType, boolean discount, int issuedTick, int requestTick, int amountSold){
-		this.seller=seller;
-		this.customer=customer;
-		this.shoeType=shoeType;
+	public ManufacturingOrderRequest(String seller,String customer,String shoeType,boolean discount, int issuedTick,int requestTick, int amountSold) {
+		this.seller = seller;
+		this.customer = customer;
+		this.shoeType = shoeType;
 		this.discount=discount;
 		this.issuedTick=issuedTick;
 		this.requestTick=requestTick;
 		this.amountSold=amountSold;
-		
+
 	}
 
 	public String getSeller() {
@@ -75,6 +80,6 @@ public class Receipt {
 	public void setAmountSold(int amountSold) {
 		this.amountSold = amountSold;
 	}
-	
-	
+
+
 }
