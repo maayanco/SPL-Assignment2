@@ -32,7 +32,7 @@ public class TimeService extends MicroService{
 					terminate(); //so gracefull!
 				TickBroadcast b = new TickBroadcast(currentTick);
 				sendBroadcast(b);
-				System.out.println("current time is: "+currentTick);
+				//System.out.println("current time is: "+currentTick);
 			}
 		};
 		
