@@ -10,7 +10,7 @@ public class PurchaseOrderRequest implements Request<Receipt> {
 	private String customer;
 	private String shoeType;
 	private boolean discount;
-	private int issuedTick;
+	//private int issuedTick;
 	private int requestTick;
 	private int amountSold;
 	
@@ -19,7 +19,7 @@ public class PurchaseOrderRequest implements Request<Receipt> {
 		this.customer = customer;
 		this.shoeType = shoeType;
 		this.discount=discount;
-		this.issuedTick=issuedTick;
+		//this.issuedTick=issuedTick;
 		this.requestTick=requestTick;
 		this.amountSold=amountSold;
 
@@ -57,14 +57,14 @@ public class PurchaseOrderRequest implements Request<Receipt> {
 		this.discount = discount;
 	}
 
-	public int getIssuedTick() {
+/*	public int getIssuedTick() {
 		return issuedTick;
 	}
 
 	public void setIssuedTick(int issuedTick) {
 		this.issuedTick = issuedTick;
 	}
-
+*/
 	public int getRequestTick() {
 		return requestTick;
 	}
