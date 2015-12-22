@@ -5,7 +5,7 @@ import bgu.spl.mics.Broadcast;
 //lital
 public class TickBroadcast implements Broadcast {
 	
-	private int  tick;
+	private int tick;
 	
 	public  TickBroadcast(int tick){
 		this.tick=tick;
