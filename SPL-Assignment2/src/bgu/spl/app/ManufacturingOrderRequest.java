@@ -4,8 +4,32 @@ import bgu.spl.mics.Request;
 
 public class ManufacturingOrderRequest implements Request<Receipt> {
 	
-	//not real!!
+	private String shoeType;
+	private int amount;
 	
+	public ManufacturingOrderRequest(String shoeType, int amount){
+		this.shoeType=shoeType;
+		this.amount=amount;
+	}
+
+	public String getShoeType() {
+		return shoeType;
+	}
+
+	public void setShoeType(String shoeType) {
+		this.shoeType = shoeType;
+	}
+
+	public int getAmount() {
+		return amount;
+	}
+
+	public void setAmount(int amount) {
+		this.amount = amount;
+	}
+	
+	//not real!!
+	/*
 	private String seller;
 	private String customer;
 	private String shoeType;
@@ -81,5 +105,5 @@ public class ManufacturingOrderRequest implements Request<Receipt> {
 		this.amountSold = amountSold;
 	}
 
-
+*/
 }

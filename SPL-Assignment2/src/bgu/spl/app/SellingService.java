@@ -31,11 +31,18 @@ public class SellingService extends MicroService{
 			}
 			if(res.equals(BuyResult.NOT_IN_STOCK)){
 				RestockRequest requestToRestock = new RestockRequest(req.getShoeType());
-				sendRequest(requestToRestock, reqq -> {
+				Boolean resultOfRequest = sendRequest(requestToRestock, reqq -> {
 					/* WTFF Should i write here*/
-					 
+					//what should happen when the restock request is performed?
+					//complete(req, resultOfRequest);
 					});
-				
+				if(resultOfRequest==true){
+					//in this case i think the restock was succsessfull then now  
+					
+				}
+				else{
+					complete(req,null);
+				}
 			}
 				
         });
