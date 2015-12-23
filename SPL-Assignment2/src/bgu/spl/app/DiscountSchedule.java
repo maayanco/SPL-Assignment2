@@ -2,8 +2,9 @@ package bgu.spl.app;
 
 public class DiscountSchedule {
 	private String shoeType;
-	private int tick;
 	private int amount;
+	private int tick;
+	
 	
 	//lital
 	
