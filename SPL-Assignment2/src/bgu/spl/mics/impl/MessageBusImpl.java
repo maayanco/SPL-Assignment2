@@ -27,8 +27,8 @@ public class MessageBusImpl implements MessageBus{
 	private static final Logger log = Logger.getLogger( MessageBusImpl.class.getName() );
 	
 	private Map<MicroService, LinkedBlockingQueue<Message>> mapMicroServicesToQueues;
-	private Map<Class<? extends Request>,RoundRobinList> mapRequestTypesToMicroServices;
-	private Map<Class<? extends Broadcast>,RoundRobinList> mapBroadcastTypesToMicroServices;
+	private Map<Class<? extends Message>,RoundRobinList> mapRequestTypesToMicroServices;//
+	private Map<Class<? extends Message>,RoundRobinList> mapBroadcastTypesToMicroServices;
 	private Map<Request<?>,MicroService> mapRequestsToMicroServices;
 	
 	
@@ -45,8 +45,8 @@ public class MessageBusImpl implements MessageBus{
 */		
 		//Remember this should be a thread safe singleton!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		mapMicroServicesToQueues = new HashMap<MicroService, LinkedBlockingQueue<Message>>();
-		mapRequestTypesToMicroServices = new HashMap<Class<? extends Request>, RoundRobinList>();
-		mapBroadcastTypesToMicroServices = new HashMap<Class<? extends Broadcast>,RoundRobinList>();
+		mapRequestTypesToMicroServices = new HashMap<Class<? extends Message>, RoundRobinList>();
+		mapBroadcastTypesToMicroServices = new HashMap<Class<? extends Message>,RoundRobinList>();
 		mapRequestsToMicroServices = new HashMap<Request<?>, MicroService>();
 		
 		/*log.log(Level.INFO, " 'MessageBusImpl' has been initialized"); //Logger
@@ -64,11 +64,23 @@ public class MessageBusImpl implements MessageBus{
      */
 	//we map the requests types! to the micro services
 	public void subscribeRequest(Class<? extends Request> type, MicroService m) {
-		/*log.log(Level.INFO, "subscribeRequest method was invoked with parameters: "+type+", "+m); //Logger
-*/		
-		// Here we need to use only the mapBroadcastTypesToMicroServices
-		if(mapRequestTypesToMicroServices.containsKey(type)){ //if the type already exists in the map
-			RoundRobinList microServicesSubscribedToTypeList = mapRequestTypesToMicroServices.get(type); //get the linkedList
+		
+		subscribeMessage(type, m, MESSAGE_OF_TYPE_REQUEST);
+	}
+	
+	public void subscribeMessage(Class<? extends Message> type, MicroService m, String typeOfRequest){
+	
+		Map<Class<? extends Message>,RoundRobinList> map;
+		
+		if(typeOfRequest.equals(MESSAGE_OF_TYPE_REQUEST)){
+			map = mapRequestTypesToMicroServices;
+		}
+		else{
+			map= mapBroadcastTypesToMicroServices;
+		}
+		
+		if(map.containsKey(type)){ //if the type already exists in the map
+			RoundRobinList microServicesSubscribedToTypeList = map.get(type); //get the linkedList
 			if(!microServicesSubscribedToTypeList.contains(m)){
 				microServicesSubscribedToTypeList.add(m);
 				/*log.log(Level.INFO, "The microService "+m+" sucsessfully subscribed to the request type "+type);*/
@@ -80,7 +92,7 @@ public class MessageBusImpl implements MessageBus{
 		else{ // if the type doesn't exist in the map
 			RoundRobinList list = new RoundRobinList();
 			list.add(m);
-			mapRequestTypesToMicroServices.put(type, list);
+			map.put(type, list);
 			
 			/*log.log(Level.INFO, "The microService "+m+" sucsessfully subscribed to the request type "+type);*/
 		}	
@@ -89,53 +101,16 @@ public class MessageBusImpl implements MessageBus{
 	@Override
 	/**
      * subscribes {@code m} to receive {@link Broadcast}s of type {@code type}.
-w    * <p>
+     * <p>
      * @param type the type to subscribe to
      * @param m    the subscribing micro-service
      */
 	public void subscribeBroadcast(Class<? extends Broadcast> type, MicroService m) {
-		/*log.log(Level.INFO, "subscribeBroadcast method was invoked with parameters: "+type+", "+m); //Logger
-*/		
 		
-		// Here we need to use only the mapBroadcastTypesToMicroServices
-		if(mapBroadcastTypesToMicroServices.containsKey(type)){ //if the type already exists in the map
-			RoundRobinList microServicesSubscribedToTypeList = mapBroadcastTypesToMicroServices.get(type); //get the linkedList
-			if(!microServicesSubscribedToTypeList.contains(m)){
-				microServicesSubscribedToTypeList.add(m);
-				/*log.log(Level.INFO, "The microService "+m+" sucsessfully subscribed to the broadcast type "+type.toString());*/
-			}
-			else{
-			/*	log.log(Level.WARNING, "Attempt to subscribe the MicroService "+m.toString()+" to the Broadcast type "+type.toString()+" aborted,"+m+" is already subscribed");*/
-			}
-		}
-		else{ // if the type doesn't exist in the map
-			RoundRobinList list = new RoundRobinList();
-			list.add(m);
-			mapBroadcastTypesToMicroServices.put(type, list);
-			/*log.log(Level.INFO, "The microService "+m+" sucsessfully subscribed to the broadcast type "+type.toString());*/
-		}
+		subscribeMessage(type, m, "broadcast");
+		
 	}
-	
-/*
-	private void tester(Class<? extends Message> type, MicroService m, String messageType){
-		Map<? extends Class<? extends Message>, RoundRobinList> mapTypesToMicroServices;
-		if(messageType.equals("Broadcast"))
-			mapTypesToMicroServices= mapBroadcastTypesToMicroServices;
-		else
-			mapTypesToMicroServices=mapRequestTypesToMicroServices;
-		
-		// Here we need to use only the mapBroadcastTypesToMicroServices
-				if(mapTypesToMicroServices.containsKey(type)){ //if the type already exists in the map
-					RoundRobinList microServicesSubscribedToTypeList = mapTypesToMicroServices.get(type); //get the linkedList
-					if(!microServicesSubscribedToTypeList.contains(m))
-						microServicesSubscribedToTypeList.add(m);
-				}
-				else{ // if the type doesn't exist in the map
-					RoundRobinList list = new RoundRobinList();
-					list.add(m);
-					mapTypesToMicroServices.put(type, list);
-				}
-	}*/
+
 
 	@Override
 	/**
@@ -153,12 +128,11 @@ w    * <p>
 	public <T> void complete(Request<T> r, T result) {
 		/*log.log(Level.INFO, "complete method was invoked with parameters: "+r+", "+result);*/
 		
-		
 		MicroService m = mapRequestsToMicroServices.get(r);
 		LinkedBlockingQueue mQueue = mapMicroServicesToQueues.get(m);
-		if(mQueue==null){
+	/*	if(mQueue==null){
 			System.out.println("damnnn");
-		}
+		}*/
 		mQueue.add(new RequestCompleted<T>(r, result));
 		
 		/*log.log(Level.INFO, "RequestCompleted message was sucsessfully added to the queue of the "+m+" MicroService who sent the request");*/
@@ -189,6 +163,7 @@ w    * <p>
 			/*log.log(Level.WARNING, "The type "+b.getClass()+" wasn't found in the mapBroadcastTypesToMicroServices - unable to send broadcast");*/
 		}
 	}
+	
 	
 	@Override
 	/**
@@ -234,8 +209,8 @@ w    * <p>
 			return false; //should we return false in this scenario?
 		}
 		
-		
 	}
+	
 
 	@Override
 	/**

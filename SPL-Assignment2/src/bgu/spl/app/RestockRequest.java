@@ -6,10 +6,12 @@ public class RestockRequest implements Request<Boolean> {
 	
 	private String shoeType;
 	private int amountRequested; //not certain we need this field..
+	private int initialRequestTick; //when the purchase order request was issued
 	
-	public RestockRequest(String shoeType, int amountRequested){
+	public RestockRequest(String shoeType, int amountRequested, int initialRequestTick){
 		this.shoeType=shoeType;
 		this.amountRequested=amountRequested;
+		this.initialRequestTick=initialRequestTick;
 	}
 	
 	public int getAmountRequested() {
@@ -26,5 +28,9 @@ public class RestockRequest implements Request<Boolean> {
 	
 	public void setShoeType(String shoeType) {
 		this.shoeType = shoeType;
+	}
+	
+	public int getInitialRequestTick(){
+		return initialRequestTick;
 	}
 }

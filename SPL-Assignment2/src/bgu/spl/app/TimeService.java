@@ -36,8 +36,6 @@ public class TimeService extends MicroService{
 			}
 		};
 		
-		timer.scheduleAtFixedRate(task, 0, speed);
-		
+		timer.scheduleAtFixedRate(task, 0, speed);	
 	}
-
 }

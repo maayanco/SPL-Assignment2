@@ -6,16 +6,16 @@ import bgu.spl.mics.Request;
 
 public class PurchaseOrderRequest implements Request<Receipt> {
 	
-	private String seller;
-	private String customer;
+	//private String seller; //i don't think this is something we need!! we need to remove this
+	private String customer; // 
 	private String shoeType;
 	private boolean discount;
 	//private int issuedTick;
 	private int requestTick;
 	private int amountSold;
 	
-	public PurchaseOrderRequest(String seller,String customer,String shoeType,boolean discount, int issuedTick,int requestTick, int amountSold) {
-		this.seller = seller;
+	public PurchaseOrderRequest(String customer,String shoeType,boolean discount,int requestTick, int amountSold) {
+		//this.seller = seller;
 		this.customer = customer;
 		this.shoeType = shoeType;
 		this.discount=discount;
@@ -23,14 +23,6 @@ public class PurchaseOrderRequest implements Request<Receipt> {
 		this.requestTick=requestTick;
 		this.amountSold=amountSold;
 
-	}
-
-	public String getSeller() {
-		return seller;
-	}
-
-	public void setSeller(String seller) {
-		this.seller = seller;
 	}
 
 	public String getCustomer() {

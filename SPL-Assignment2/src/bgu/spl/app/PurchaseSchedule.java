@@ -4,6 +4,8 @@ import bgu.spl.mics.Request;
 
 //lital
 
+//should not be changed, fields were provided like this..
+
 public class PurchaseSchedule {
 	private  String shoeType;
 	private int tick;
