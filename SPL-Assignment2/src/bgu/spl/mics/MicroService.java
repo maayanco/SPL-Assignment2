@@ -2,6 +2,7 @@ package bgu.spl.mics;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -38,7 +39,7 @@ public abstract class MicroService implements Runnable {
 	 * @param name the micro-service name (used mainly for debugging purposes -
 	 *             does not have to be unique)
 	 */
-	public MicroService(String name) {
+	public  MicroService(String name) {
 		messageBusInstance.register(this);
 		this.name = name;
 	}
@@ -63,7 +64,7 @@ public abstract class MicroService implements Runnable {
 	 *                 {@code type} are taken from this micro-service message
 	 *                 queue.
 	 */
-	protected final <R extends Request> void subscribeRequest(Class<R> type, Callback<R> callback) {
+	protected  final <R extends Request> void subscribeRequest(Class<R> type, Callback<R> callback) {
 		/*log.log(Level.INFO, "subscribeRequest method was invoked with parameters:"+type+" , "+callback);*/
 
 		messageBusInstance.subscribeRequest(type, this);
@@ -93,7 +94,7 @@ public abstract class MicroService implements Runnable {
 	 *                 {@code type} are taken from this micro-service message
 	 *                 queue.
 	 */
-	protected final <B extends Broadcast> void subscribeBroadcast(Class<B> type, Callback<B> callback) {
+	protected  final <B extends Broadcast> void subscribeBroadcast(Class<B> type, Callback<B> callback) {
 		/*log.log(Level.INFO, "subscribeBroadcast method was invoked with parameters:"+type+" , "+callback);*/
 
 		messageBusInstance.subscribeBroadcast(type, this);
@@ -119,7 +120,7 @@ public abstract class MicroService implements Runnable {
 	 * @return true if there was at least one micro-service subscribed to
 	 *         {@code r.getClass()} and false otherwise.
 	 */
-	protected final <T> boolean sendRequest(Request<T> r, Callback<T> onComplete) {
+	protected  final <T> boolean sendRequest(Request<T> r, Callback<T> onComplete) {
 		/*log.log(Level.INFO, "sendRequest method was invoked with parameters "+r+" , "+onComplete);*/
 
 		Boolean bol = messageBusInstance.sendRequest(r, this);
@@ -133,7 +134,7 @@ public abstract class MicroService implements Runnable {
 	 * <p>
 	 * @param b the broadcast message to send
 	 */
-	protected final void sendBroadcast(Broadcast b) {
+	protected  final void sendBroadcast(Broadcast b) {
 		/*log.log(Level.INFO, "sendBroadcast method was invoked with parameters:"+b);*/
 
 		messageBusInstance.sendBroadcast(b);
@@ -169,7 +170,7 @@ public abstract class MicroService implements Runnable {
 	 * signal the event loop that it must terminate after handling the current
 	 * message.
 	 */
-	protected final void terminate() {
+	protected  final void terminate() {
 		this.terminated = true;
 	}
 
@@ -177,7 +178,7 @@ public abstract class MicroService implements Runnable {
 	 * @return the name of the service - the service name is given to it in the
 	 *         construction time and is used mainly for debugging purposes.
 	 */
-	public final String getName() {
+	public  final String getName() {
 		return name;
 	}
 
@@ -186,7 +187,7 @@ public abstract class MicroService implements Runnable {
 	 * otherwise you will end up in an infinite loop.
 	 */
 	@Override
-	public final void run() {
+	public  final void run() {
 		
 		initialize();
 		while (!terminated) {
@@ -221,6 +222,7 @@ public abstract class MicroService implements Runnable {
 			
 		}
 		messageBusInstance.unregister(this); 
+		
 	}
 
 }

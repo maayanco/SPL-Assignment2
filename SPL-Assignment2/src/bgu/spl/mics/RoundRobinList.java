@@ -55,7 +55,7 @@ public class RoundRobinList{
 			if(indexOfObj<index)
 				index=(index-1)%list.size();
 			else
-				index=index%list.size();
+				index=index%list.size();  //error
 		}
 		return bool;
 	}

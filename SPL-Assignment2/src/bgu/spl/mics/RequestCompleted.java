@@ -17,5 +17,9 @@ public class RequestCompleted<T> implements Message {
     public T getResult() {
         return result;
     }
-
+    
+    @Override
+    public String toString(){
+    	return "completed: "+completed+"result: "+result;
+    }
 }

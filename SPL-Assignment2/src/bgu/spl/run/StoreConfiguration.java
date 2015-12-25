@@ -1,16 +1,24 @@
 package bgu.spl.run;
 
+import bgu.spl.app.DiscountSchedule;
+
 public class StoreConfiguration {
-	private String[] initialStorage;
+	private Storage[] initialStorage;
 	private Service services;
-	private Manager manager;
-	private int factories;
-	private int sellers;
-	private Customer[] customers;
 	
-	public StoreConfiguration(){
-		
+	public Service getServices(){
+		return services;
 	}
+	
+	public Storage[] getInitialStorage(){
+		return initialStorage;
+	}
+
+
+	 @Override
+	    public String toString() {
+	        return "services:"+services+"initial storage:"+initialStorage;
+	    }
 }
 
 

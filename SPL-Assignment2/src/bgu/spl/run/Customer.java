@@ -7,7 +7,16 @@ public class Customer {
 	private String[] wishList;
 	private PurchaseSchedule[] purchaseSchedule;
 	
-	public Customer(){
-		
+	
+	public String getName(){
+		return name;
+	}
+	
+	public String[] getWishList(){
+		return wishList;
+	}
+	
+	public PurchaseSchedule[] getPurchaseSchedule(){
+		return purchaseSchedule;
 	}
 }

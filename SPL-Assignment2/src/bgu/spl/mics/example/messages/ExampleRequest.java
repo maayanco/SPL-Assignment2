@@ -13,4 +13,8 @@ public class ExampleRequest implements Request<String>{
     public String getSenderName() {
         return senderName;
     }
+    
+    public String toString(){
+    	return "senderName:"+senderName;
+    }
 }

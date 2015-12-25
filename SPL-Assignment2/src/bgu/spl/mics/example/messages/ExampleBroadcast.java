@@ -13,5 +13,10 @@ public class ExampleBroadcast implements Broadcast {
     public String getSenderId() {
         return senderId;
     }
+    
+    @Override
+    public String toString(){
+    	return "senderId:"+senderId;
+    }
 
 }

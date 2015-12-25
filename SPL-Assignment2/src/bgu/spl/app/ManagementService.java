@@ -4,12 +4,16 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.logging.Logger;
 
 import bgu.spl.mics.MicroService;
+import bgu.spl.mics.impl.MessageBusImpl;
 
 public class ManagementService extends MicroService{
 	
 	private static final Store storeInstance = Store.getInstance();
+	private static final Logger log = Logger.getLogger( MessageBusImpl.class.getName() );
 	
 	//SHould probably removve the manufacturing order from the map after i finissh it!!!!!
 	
@@ -17,8 +21,9 @@ public class ManagementService extends MicroService{
 	private Map<Integer,DiscountSchedule> mapTicksToDiscountSchedules;
 	private Map<String, ManufacturingOrderRequest> mapShoeTypesToManufacturingOrders;/////fuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuck
 	private Map<ManufacturingOrderRequest,LinkedList<RestockRequest>> mapManufacturingOrderRequestsToRestockRequests; 
+	private CountDownLatch latchObject;
 	
-	public ManagementService(List<DiscountSchedule> discountScheduleList) {
+	public ManagementService(List<DiscountSchedule> discountScheduleList, CountDownLatch latchObject) {
 		super("manager");
 		
 		//Initialize map and clone the received list
@@ -29,6 +34,9 @@ public class ManagementService extends MicroService{
 		
 		mapShoeTypesToManufacturingOrders = new HashMap<String, ManufacturingOrderRequest>();
 		// TODO Auto-generated constructor stub
+		
+		this.latchObject=latchObject;
+		latchObject.countDown();
 	}
 
 	@Override
@@ -77,6 +85,13 @@ public class ManagementService extends MicroService{
 				}
 			}
 			
+		});
+		
+		subscribeBroadcast(TerminationBroadcast.class, req -> {
+			if(req.getToTerminate()==true){
+				latchObject.countDown();
+				terminate();
+			}
 		});
 		
 	}

@@ -6,9 +6,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.logging.LoggingPermission;
+
+import javax.swing.text.StyledEditorKit.StyledTextAction;
 
 import bgu.spl.mics.Broadcast;
 import bgu.spl.mics.Message;
@@ -41,6 +45,10 @@ public class MessageBusImpl implements MessageBus{
     }
 	
 	public MessageBusImpl(){
+		System.setProperty("java.util.logging.SimpleFormatter.format",
+				"%1$tF %1$tT %4$s %2$s %5$s%6$s%n");
+		
+		log.log(Level.INFO, "test the looooooooooooooooog");
 		/*log.log(Level.INFO, "MessageBusImpl Constructor was invoked"); //Logger
 */		
 		//Remember this should be a thread safe singleton!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -63,12 +71,12 @@ public class MessageBusImpl implements MessageBus{
      * @param m    the subscribing micro-service
      */
 	//we map the requests types! to the micro services
-	public void subscribeRequest(Class<? extends Request> type, MicroService m) {
+	public  void subscribeRequest(Class<? extends Request> type, MicroService m) {
 		
 		subscribeMessage(type, m, MESSAGE_OF_TYPE_REQUEST);
 	}
 	
-	public void subscribeMessage(Class<? extends Message> type, MicroService m, String typeOfRequest){
+	public  void subscribeMessage(Class<? extends Message> type, MicroService m, String typeOfRequest){
 	
 		Map<Class<? extends Message>,RoundRobinList> map;
 		
@@ -105,7 +113,7 @@ public class MessageBusImpl implements MessageBus{
      * @param type the type to subscribe to
      * @param m    the subscribing micro-service
      */
-	public void subscribeBroadcast(Class<? extends Broadcast> type, MicroService m) {
+	public  void subscribeBroadcast(Class<? extends Broadcast> type, MicroService m) {
 		
 		subscribeMessage(type, m, "broadcast");
 		
@@ -125,20 +133,52 @@ public class MessageBusImpl implements MessageBus{
      * @param r      the completed request
      * @param result the result of the completed request
      */
-	public <T> void complete(Request<T> r, T result) {
+	public synchronized <T> void complete(Request<T> r, T result) {
 		/*log.log(Level.INFO, "complete method was invoked with parameters: "+r+", "+result);*/
 		
+		String nameOfService="";
+		/*try{*/
+		
 		MicroService m = mapRequestsToMicroServices.get(r);
+		nameOfService = m.getName(); //debuggg //m is nulllll if i understand correctly
 		LinkedBlockingQueue mQueue = mapMicroServicesToQueues.get(m);
 	/*	if(mQueue==null){
 			System.out.println("damnnn");
 		}*/
-		mQueue.add(new RequestCompleted<T>(r, result));
 		
+		mQueue.add(new RequestCompleted<T>(r, result));
+		/*
+		}
+		catch(NullPointerException e){
+		
+			boolean trueOrFalse = mapRequestsToMicroServices.containsKey(r);
+			MicroService resultOfMap = mapRequestsToMicroServices.get(r);
+			boolean trueOrFalse2 = mapMicroServicesToQueues.containsKey(resultOfMap);
+			LinkedBlockingQueue<Message> returnedQueue = mapMicroServicesToQueues.get(resultOfMap);
+			System.out.println("-----------------------");
+			System.out.println("nameOfService:"+nameOfService);
+			System.out.println("let's print the mapMicroServicesToQueues");
+			printMapMicroServicesToQueues();
+			System.out.println("-----------------------");
+			
+		}*/
 		/*log.log(Level.INFO, "RequestCompleted message was sucsessfully added to the queue of the "+m+" MicroService who sent the request");*/
  	}
 
 	
+	private void printMapMicroServicesToQueues(){
+		Iterator it = mapMicroServicesToQueues.entrySet().iterator();
+		while(it.hasNext()){
+			Map.Entry pair = (Map.Entry)it.next();
+			LinkedBlockingQueue<Message> lst = (LinkedBlockingQueue<Message>)pair.getValue();
+			Object[] messages = lst.toArray();
+			
+			for(int i=0; i<lst.size(); i++){
+				System.out.println(messages[i].toString());
+			}
+		}
+		
+	}
 	@Override
 	/**
      * add the {@link Broadcast} {@code b} to the message queues of all the
@@ -146,7 +186,7 @@ public class MessageBusImpl implements MessageBus{
      * <p>
      * @param b the message to add to the queues.
      */
-	public void sendBroadcast(Broadcast b) {
+	public  void sendBroadcast(Broadcast b) {
 		/*log.log(Level.INFO, "sendBroadcast method was invoked with parameter: "+b); //Logger
 */		
 		if(mapBroadcastTypesToMicroServices.containsKey(b.getClass())){ //Check that the 
@@ -176,7 +216,7 @@ public class MessageBusImpl implements MessageBus{
      * @return true if there was at least one micro-service subscribed to
      *         {@code r.getClass()} and false otherwise.
      */
-	public boolean sendRequest(Request<?> r, MicroService requester) {
+	public synchronized boolean sendRequest(Request<?> r, MicroService requester) {
 		/*log.log(Level.INFO, "sendRequest method was invoked"); //Logger
 */		
 		
@@ -199,6 +239,7 @@ public class MessageBusImpl implements MessageBus{
 		/*log.log(Level.INFO, "");*/
 		
 		//map the request to the microService
+		
 		if(!mapRequestsToMicroServices.containsKey(r)){
 			mapRequestsToMicroServices.put(r, requester);
 			/*log.log(Level.INFO, "MicroService "+m+" was succsessfully mapped to the request "+r);*/
@@ -209,6 +250,8 @@ public class MessageBusImpl implements MessageBus{
 			return false; //should we return false in this scenario?
 		}
 		
+		
+		
 	}
 	
 
@@ -218,7 +261,7 @@ public class MessageBusImpl implements MessageBus{
      * <p>
      * @param m the micro-service to create a queue for.
      */
-	public void register(MicroService m) {
+	public  void register(MicroService m) {
 		/*log.log(Level.INFO, "register method was invoked with parameters: "+m); //Logger
 */		
 		LinkedBlockingQueue<Message> microServiceQueue = new LinkedBlockingQueue<Message>(); //creating the queue
@@ -236,7 +279,7 @@ public class MessageBusImpl implements MessageBus{
      * <p>
      * @param m the micro-service to unregister.
      */
-	public void unregister(MicroService m) {
+	public  void unregister(MicroService m) {
 		/*log.log(Level.INFO, "unregister method was invoked with parameters: "+m); //Logger
 */		
 		//if the map contains an entry whose key is the m.name, then remove that entry
@@ -273,7 +316,7 @@ public class MessageBusImpl implements MessageBus{
      * @throws InterruptedException if interrupted while waiting for a message
      *                              to became available.
      */
-	public Message awaitMessage(MicroService m) throws InterruptedException {
+	public  Message awaitMessage(MicroService m) throws InterruptedException {
 		/*log.log(Level.INFO, "awaitMessage method was invoked with parameters: "+m); //Logger
 */		
 		if(!mapMicroServicesToQueues.containsKey(m)){
@@ -289,7 +332,7 @@ public class MessageBusImpl implements MessageBus{
 	
 	//Currently not used
 	//Go over the mapTypesToMicroServices and delete the microService "m"
-	private void removeMicroServiceFromBroadcasts(MicroService m){
+	private  void removeMicroServiceFromBroadcasts(MicroService m){
 		/*log.log(Level.INFO, "removeMicroServiceFromBroadcasts method was invoked with parameters: "+m); //Logger
 */		
 		Boolean isFound=false;
@@ -311,7 +354,7 @@ public class MessageBusImpl implements MessageBus{
 		}
 	}
 	
-	private void removeMicroServiceFromRequests(MicroService m){
+	private  void removeMicroServiceFromRequests(MicroService m){
 		/*log.log(Level.INFO, "removeMicroServiceFromRequests method was invoked with parameters: "+m); //Logger
 */		
 		Boolean isFound=false;
@@ -335,7 +378,7 @@ public class MessageBusImpl implements MessageBus{
 	}
 	
 	//Go over the mapMicroServiceToQueue, find the entry whose key is the provided microservice, and then return it's value (the queue)
-	private LinkedBlockingQueue<Message> getQueueByMicroService(MicroService m){
+	private  synchronized LinkedBlockingQueue<Message> getQueueByMicroService(MicroService m){
 		/*log.log(Level.INFO, "getQueueByMicroService method was invoked with parameters: "+m); //Logger
 */		
 		Iterator it = mapMicroServicesToQueues.entrySet().iterator();
