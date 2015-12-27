@@ -16,57 +16,69 @@ public class ShoeFactoryService extends MicroService{
 	private int currentTick;
 	private LinkedList<ManufacturingOrderRequest> queueManufacturingOrders;
 	private Map<ManufacturingOrderRequest,Integer> mapManufacturingOrdersToShoesNumber; 
-	private CountDownLatch latchObject;
+	private CountDownLatch startLatchObject;
+	private CountDownLatch endLatchObject;
+	
 	private static final Logger log = Logger.getLogger( MessageBusImpl.class.getName() );
 	
-	public ShoeFactoryService(String name, CountDownLatch latchObject) {
+	public ShoeFactoryService(String name, CountDownLatch startLatchObject, CountDownLatch endLatchObject) {
 		super(name);
 		
 		queueManufacturingOrders = new LinkedList<ManufacturingOrderRequest>();
 		mapManufacturingOrdersToShoesNumber = new HashMap<ManufacturingOrderRequest,Integer>();
 		
-		this.latchObject=latchObject;
-		latchObject.countDown();
+		log.log(Level.INFO, getName()+" factory was initialized");
+		this.startLatchObject=startLatchObject;
+		startLatchObject.countDown();
+		this.endLatchObject=endLatchObject;
 	}
 
 	
 	@Override
 	protected void initialize() {
-		
+		subscribeToTickBroadcast();
+		subscribeToManufacturingOrderRequest();
+		subscribeToTerminationBroadcast();
+	}
+	
+	private void subscribeToTickBroadcast(){
 		subscribeBroadcast(TickBroadcast.class, req -> {
 			currentTick = req.getTick();
 			makeShoeIfNeeded();
 		});
 		
+	}
+	
+	private void subscribeToManufacturingOrderRequest(){
 		subscribeRequest(ManufacturingOrderRequest.class, req -> {
-			log.log(Level.INFO, "i got a manufacturing order");
-			queueManufacturingOrders.add(req); // here we added the request
+			log.log(Level.INFO, getName()+" has received a manufacturing request for "+req.getAmount()+" shoes of type "+req.getShoeType()+" which was issued at the tick: "+req.getInitialRequestTick());
+			queueManufacturingOrders.add(req); 
 			mapManufacturingOrdersToShoesNumber.put(req, req.getAmount());
 			
 		});
-		
+	}
+	
+	private void subscribeToTerminationBroadcast(){
 		subscribeBroadcast(TerminationBroadcast.class, req -> {
-			log.log(Level.INFO, "i am terminatinnnng");
 			if(req.getToTerminate()==true){
-				latchObject.countDown();
+				log.log(Level.INFO, getName()+" has received a termination broadcast and is terminating..");
+				System.out.println("CountDownLatch - counted down at "+getName());//debuuuug
+				endLatchObject.countDown();
 				terminate();
 			}
 		});
-		
 	}
 	
 	private void makeShoeIfNeeded(){
 		
-		//log.log(Level.INFO, "we are making a shoe");
-		
 		if(!queueManufacturingOrders.isEmpty()){
 			ManufacturingOrderRequest manufactringOrder = queueManufacturingOrders.getFirst();
 			if(!mapManufacturingOrdersToShoesNumber.containsKey(manufactringOrder)){
-				System.out.println("damn!!");
-				//we should log this as really bad..
+				log.log(Level.SEVERE, getName()+" has encountered a problem - couldn't manufacture shoe ");
 			}
 			int numberOfShoesLeftToProduce = mapManufacturingOrdersToShoesNumber.get(manufactringOrder);
 			numberOfShoesLeftToProduce=numberOfShoesLeftToProduce-1;
+			log.log(Level.INFO, getName()+" has created a new shoe of type "+manufactringOrder.getShoeType());
 			if(numberOfShoesLeftToProduce==0){
 				Receipt receipt = new Receipt(this.getName(),"store", manufactringOrder.getShoeType(),false, currentTick, manufactringOrder.getInitialRequestTick(), manufactringOrder.getAmount() );
 				complete(manufactringOrder, receipt);

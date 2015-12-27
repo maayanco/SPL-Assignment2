@@ -38,7 +38,7 @@ public class Store {
 				locatedShoe = item;
 		}
 		 
-		if(locatedShoe==null) //There was no shoe found of the requested type
+		if(locatedShoe==null || locatedShoe.getAmountOnStorage()==0) 
 			return BuyResult.NOT_IN_STOCK;
 		
 		else if(onlyDiscount && (locatedShoe.getDiscountedAmount()==0))
@@ -56,6 +56,9 @@ public class Store {
 			return BuyResult.REGULAR_PRICE;
 		}
 		
+		//DEBUUUG TO FIND OUT WHY ARE WE RETURNING NULL
+		System.out.println("HELLLLO THIS IS THE STORE - WE ARE ABOUT TO RETURN NULL. You wanted show type: "+shoeType+" discount status: "+onlyDiscount+". and what we have is:");
+		printShoes();
 		return null;
 			
 	}
@@ -93,8 +96,7 @@ public class Store {
 		receiptList.add(receipt);
 	}
 	
-	public void print(){
-		
+	private void printShoes(){
 		System.out.println(" ");
 		System.out.println("-------------------Shoes In Stock:-------------------");
 		for(ShoeStorageInfo item : shoeStorageList){
@@ -106,6 +108,10 @@ public class Store {
 		
 		System.out.println(" ");
 		
+	}
+	
+	
+	private void printReceipts(){
 		System.out.println("-------------------Receipts:-------------------");
 		for(Receipt item : receiptList){
 			System.out.println("--------- seller: "+item.getSeller());
@@ -117,7 +123,12 @@ public class Store {
 			System.out.println("--------- Amount sold: "+item.getAmountSold());
 			System.out.println("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
 			
-		}
+		}	
+	}
+	
+	public void print(){
+		printShoes();
+		printReceipts();
 	}
 	
 	

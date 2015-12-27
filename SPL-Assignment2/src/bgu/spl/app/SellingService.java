@@ -12,48 +12,56 @@ public class SellingService extends MicroService{
 
 	private Store storeInstance = Store.getInstance();
 	private int currentTick;
-	private CountDownLatch latchObject;
+	private CountDownLatch startLatchObject;
+	private CountDownLatch endLatchObject;
+	
 	private static final Logger log = Logger.getLogger( MessageBusImpl.class.getName() );
 	
-	public SellingService(String name, CountDownLatch latchObject) {
+	public SellingService(String name, CountDownLatch startLatchObject, CountDownLatch endLatchObject) {
 		super(name);
 		
-		log.log(Level.INFO, "in selling service");
+		log.log(Level.INFO, getName()+" selling service was initialized");
 		
-		currentTick=1; //should i? 
-		this.latchObject=latchObject;
-		latchObject.countDown();
+		currentTick=1; 
+		this.startLatchObject=startLatchObject;
+		startLatchObject.countDown();
+		this.endLatchObject=endLatchObject;
 	}
 
-	@Override
-	protected void initialize() {
-		
-		log.log(Level.INFO, "in selling service");
-		
+	
+	private void subscribeToTickBroadcast(){
 		subscribeBroadcast(TickBroadcast.class, req -> {
 			currentTick = req.getTick();
 		});
-		
+
+	}
+	
+	
+	private void subscribeToPurchaseOrderRequest(){
 		subscribeRequest(PurchaseOrderRequest.class, req -> {
-			log.log(Level.INFO, "i got a purchase order!! ");
+			log.log(Level.INFO, " has received a purchase request for "+req.getAmountSold()+" shoes of type "+req.getShoeType());
 			BuyResult res = storeInstance.take(req.getShoeType(), req.isDiscount()); //try to take from store
-			if(res.equals(BuyResult.DISCOUNTED_PRICE) || res.equals(BuyResult.REGULAR_PRICE)){
-			Receipt receipt = new Receipt(this.getName(), req.getCustomer(), req.getShoeType(), req.isDiscount(), currentTick, req.getRequestTick(), req.getAmountSold());
+			if(res.equals(BuyResult.DISCOUNTED_PRICE) || res.equals(BuyResult.REGULAR_PRICE)){ //EXCEPTION HERE
+				log.log(Level.INFO, getName()+" has completed a purchase order by taking sucsessfully from the store ");
+				Receipt receipt = new Receipt(this.getName(), req.getCustomer(), req.getShoeType(), req.isDiscount(), currentTick, req.getRequestTick(), req.getAmountSold());
 				storeInstance.file(receipt);
 				complete(req,receipt);
 			}
 			else if(res.equals(BuyResult.NOT_ON_DISCOUNT)){
+				log.log(Level.INFO, getName()+" couldn't complete the purchase request because there were no items on discount in the stock as requested ");
 				complete(req,null);
 			}
 			else if(res.equals(BuyResult.NOT_IN_STOCK)){
 				RestockRequest requestToRestock = new RestockRequest(req.getShoeType(),1, req.getRequestTick());
 				sendRequest(requestToRestock, reqq -> {
 					if(reqq){
+						log.log(Level.INFO, getName()+" sent a request to restock which was sucsessfull ");
 						//*********** not sure about this receipt thing... was not explicitly written in the assignment guidlines
 						Receipt receipt = new Receipt(this.getName(), req.getCustomer(), req.getShoeType(), req.isDiscount(), currentTick, req.getRequestTick(), req.getAmountSold());
 						complete(req, receipt);
 					}
 					else{
+						log.log(Level.INFO, getName()+" sent a request to restock which wasn't succsessfull");
 						complete(req, null);
 					}
 				});
@@ -61,14 +69,25 @@ public class SellingService extends MicroService{
 				
         });
 		
+	}
+	
+	private void subscribeToTerminationBroadcast(){
 		subscribeBroadcast(TerminationBroadcast.class, req -> {
-			log.log(Level.INFO, "terminating mee ");
 			if(req.getToTerminate()==true){
-				latchObject.countDown();
+				log.log(Level.INFO, getName()+" has received a termination broadcast and is terminating..");
+				System.out.println("CountDownLatch - counted down at "+getName());//debuuuug
+				endLatchObject.countDown();
 				terminate();
 			}
 		});
-		
+	}
+	
+	
+	@Override
+	protected void initialize() {
+		subscribeToTickBroadcast();		
+		subscribeToPurchaseOrderRequest();
+		subscribeToTerminationBroadcast();
 	}
 
 }

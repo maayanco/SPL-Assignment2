@@ -76,7 +76,7 @@ public class MessageBusImpl implements MessageBus{
      * @param type the type to subscribe to
      * @param m    the subscribing micro-service
      */
-	public  void subscribeBroadcast(Class<? extends Broadcast> type, MicroService m) {
+	public synchronized void subscribeBroadcast(Class<? extends Broadcast> type, MicroService m) {
 		subscribeMessage(type, m, "broadcast");
 	}
 	
@@ -124,10 +124,13 @@ public class MessageBusImpl implements MessageBus{
      * @param result the result of the completed request
      */
 	public synchronized <T> void complete(Request<T> r, T result) {
-		MicroService m = mapRequestsToMicroServices.get(r);
-		LinkedBlockingQueue mQueue = mapMicroServicesToQueues.get(m);
-		mQueue.add(new RequestCompleted<T>(r, result));
-		
+		if(r==null || result==null)
+			log.log(Level.SEVERE, " complete method has received a null parameter");
+		else{
+			MicroService m = mapRequestsToMicroServices.get(r);
+			LinkedBlockingQueue mQueue = mapMicroServicesToQueues.get(m);
+			mQueue.add(new RequestCompleted<T>(r, result)); //NullPointerException here!!!
+		}
  	}
 
 

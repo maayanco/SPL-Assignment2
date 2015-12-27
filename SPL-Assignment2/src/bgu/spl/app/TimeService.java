@@ -14,17 +14,21 @@ public class TimeService extends MicroService{
 	private int currentTick;
 	private int speed;
 	private int duration;
-	private CountDownLatch latchObject;
+	private CountDownLatch startLatchObject;
+	private CountDownLatch endLatchObject;
+	
 	private static final Logger log = Logger.getLogger( MessageBusImpl.class.getName() );
 	
-	public TimeService(int speed, int duration, CountDownLatch latchObject) throws InterruptedException {
+	public TimeService(int speed, int duration, CountDownLatch startLatchObject, CountDownLatch endLatchObject) throws InterruptedException {
 		super("timer");
 		
 		this.currentTick=1;
 		this.speed=speed;
 		this.duration=duration;
-		this.latchObject=latchObject;
 		
+		this.startLatchObject=startLatchObject;
+		startLatchObject.countDown();
+		this.endLatchObject=endLatchObject;
 		
 	}
 
@@ -40,19 +44,25 @@ public class TimeService extends MicroService{
 				log.log(Level.INFO, "CURRENT TICK:"+currentTick);
 				if(currentTick==duration){
 					TerminationBroadcast b = new TerminationBroadcast(true);
-					sendBroadcast(b); //tell everyone to terminate
-					latchObject.countDown();
-					terminate(); //so graceful!
+					sendBroadcast(b); 
+					System.out.println("CountDownLatch - counted down at "+getName());//debuuuug
+					endLatchObject.countDown();
+					terminate(); 
 					this.cancel();
-					//latchObject.countDown();
 				}
 				else{
 					TickBroadcast b = new TickBroadcast(currentTick);
 					sendBroadcast(b);
-					//System.out.println("current time is: "+currentTick);
 				}
 			}
 		};
+		
+		try {
+			startLatchObject.await();
+		} catch (InterruptedException e) {
+			System.out.println("damnnn");
+			e.printStackTrace();
+		}
 		
 		timer.scheduleAtFixedRate(task, 0, speed);
 		

@@ -11,9 +11,11 @@ import bgu.spl.app.*;
 import bgu.spl.app.SellingService;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 import java.util.List;
 import java.util.Set;
 import java.io.BufferedReader;
@@ -35,11 +37,9 @@ public class ShoeStoreRunner {
 		//
 			try {
 				
-				System.out.println("hiiii");
-				
 				Gson gson = new Gson();
 				
-				BufferedReader br = new BufferedReader(new FileReader("C:\\Users\\Maayan\\Desktop\\ass.json"));
+				BufferedReader br = new BufferedReader(new FileReader("C:\\Users\\Maayan\\Desktop\\sample.json"));
 
 				//convert the json string back to object
 				StoreConfiguration obj = gson.fromJson(br, StoreConfiguration.class);
@@ -62,12 +62,16 @@ public class ShoeStoreRunner {
 				int sellingServicesNum = service.getSellers();
 				Customer[] customers = service.getCustomers();
 				int clientsNum=customers.length;
+				int numberOfThreads = 2+sellingServicesNum+factoriesNum+clientsNum;
 				
-				ExecutorService e = Executors.newFixedThreadPool(2+sellingServicesNum+factoriesNum+clientsNum);
-				CountDownLatch latchObject = new CountDownLatch(2+sellingServicesNum+factoriesNum+clientsNum);
+				ExecutorService e = Executors.newFixedThreadPool(numberOfThreads);
+				CountDownLatch startLatchObject = new CountDownLatch(numberOfThreads);
+				CountDownLatch endLatchObject = new CountDownLatch(numberOfThreads);
+				
+				System.out.println("number of threads: "+numberOfThreads); //debugg
 				
 				//Creating the time service
-				TimeService timeService = new TimeService(timeParams.getSpeed(), timeParams.getDuration(), latchObject);
+				TimeService timeService = new TimeService(timeParams.getSpeed(), timeParams.getDuration(), startLatchObject, endLatchObject);
 				e.execute(timeService);
 				
 				//creating the managment service
@@ -77,18 +81,18 @@ public class ShoeStoreRunner {
 					DiscountSchedule sch = new DiscountSchedule(discountArr[i].getShoeType(), discountArr[i].getAmount(), discountArr[i].getTick());
 					discountScheduleLst.add(sch);
 				}
-				ManagementService managmentService = new ManagementService(discountScheduleLst, latchObject);
+				ManagementService managmentService = new ManagementService(discountScheduleLst, startLatchObject, endLatchObject);
 				e.execute(managmentService);
 				
 				//Creating the factories
 				for(int i=1; i<=factoriesNum; i++){
-					ShoeFactoryService factory = new ShoeFactoryService("factory "+i, latchObject);
+					ShoeFactoryService factory = new ShoeFactoryService("factory "+i, startLatchObject, endLatchObject);
 					e.execute(factory);
 				}
 				
 				//Creating the sellers
 				for(int i=1; i<=sellingServicesNum; i++){
-					SellingService sellingService = new SellingService("seller "+i, latchObject);
+					SellingService sellingService = new SellingService("seller "+i, startLatchObject, endLatchObject);
 					e.execute(sellingService);
 				}
 				
@@ -106,18 +110,21 @@ public class ShoeStoreRunner {
 						wishList.add(str);
 					}
 					 					
-					WebsiteClientService client = new WebsiteClientService(item.getName(), purchaseScheduleList, wishList, latchObject);
+					WebsiteClientService client = new WebsiteClientService(item.getName(), purchaseScheduleList, wishList, startLatchObject, endLatchObject);
 					e.execute(client);
 				}
 				
-				/*storeInstance.print();
-				*/
-				latchObject.await();
 				
-				synchronized (ShoeStoreRunner.class) {
+				//Await the end
+				endLatchObject.await();
+				
+				
+				synchronized (Logger.class) {
 					storeInstance.print();
 				}
 				
+				
+				//e.shutdownNow();
 
 			} catch (IOException e) {
 				e.printStackTrace();

@@ -18,15 +18,14 @@ public class WebsiteClientService extends MicroService {
 	private Map<Integer, PurchaseSchedule> purchaseSchedule;
 	private Set<String> wishList;
 	private int currentTick;
-	private CountDownLatch latchObject;
+	private CountDownLatch startLatchObject;
+	private CountDownLatch endLatchObject;
+	
 	private static final Logger log = Logger.getLogger( MessageBusImpl.class.getName() );
 	
-	public WebsiteClientService(String name, List<PurchaseSchedule> purchaseScheduleList, Set<String> wishListItems, CountDownLatch latchObject) {
+	public WebsiteClientService(String name, List<PurchaseSchedule> purchaseScheduleList, Set<String> wishListItems, CountDownLatch startLatchObject, CountDownLatch endLatchObject) {
 		
 		super(name);
-		
-
-		log.log(Level.INFO, "");
 		
 		//Initialize the purchaseSchedule map and clone the received list
 		purchaseSchedule = new HashMap<Integer, PurchaseSchedule>();
@@ -40,54 +39,73 @@ public class WebsiteClientService extends MicroService {
 			this.wishList.add(item);
 		}
 		
-		this.latchObject=latchObject;
-		latchObject.countDown();
+		this.startLatchObject=startLatchObject;
+		startLatchObject.countDown();
+		this.endLatchObject=endLatchObject;
 		
+		log.log(Level.INFO, getName()+" client service was initialized");
 	}
 	
-	@Override
-	protected void initialize() {
+	private void subscribeToTickBroadcast(){
 		subscribeBroadcast(TickBroadcast.class, req -> {
 			currentTick=req.getTick();
 			
-			if(purchaseSchedule.containsKey(currentTick)){//then we need to send a purchaseOrder
+			if(purchaseSchedule.containsKey(currentTick)){
 				PurchaseSchedule purchaseRequestInfo = purchaseSchedule.get(currentTick);
 				purchaseSchedule.remove(purchaseRequestInfo); 
 				PurchaseOrderRequest purchaseRequest = new PurchaseOrderRequest(this.getName(), purchaseRequestInfo.getShoeType(),false,currentTick, 1);
+				log.log(Level.INFO, getName()+" has sent a purchase request for "+purchaseRequest.getAmountSold()+" shoes of type "+purchaseRequest.getShoeType()+" at tick "+purchaseRequest.getRequestTick());
 				sendRequest(purchaseRequest, reqq -> {//should i check the content of the reqq??? check for null
 					complete(purchaseRequest,reqq); //TODO: WHAT???? Is this what supposed to happen??
 				});
 			}
 			if(wishList.isEmpty() && purchaseSchedule.isEmpty()){
-				latchObject.countDown();
+				log.log(Level.INFO, getName() +" has completed all it's purchases and wishList and is now terminating..");
+				System.out.println("CountDownLatch - counted down at "+getName());//debuuuug
+				endLatchObject.countDown();
 				terminate();
 			}
 		});
-		
+	}
+	
+	private void subscribeToNewDiscountBroadcast(){
 		subscribeBroadcast(NewDiscountBroadcast.class, req -> {
-			log.log(Level.INFO, "in client, subscribeBroadcast NewDiscount!!!");
+			log.log(Level.INFO, getName()+" has received a new Discount Broadcast for "+req.getAmountOnSale()+" shoes of type "+req.getShoeType());
 			if(wishList.contains(req.getShoeType())){
 				PurchaseOrderRequest purchaseRequest = new PurchaseOrderRequest(this.getName() , req.getShoeType(), true ,currentTick, 1);
 				sendRequest(purchaseRequest, reqq -> {
+					log.log(Level.INFO, getName()+ " has sent a new purchase order for 1 shoe of type "+req.getShoeType());
 					complete(purchaseRequest, reqq); //TODO: WHAT?? IS THIS WHAT SUPPOSED TO HAPPEN?
 				});
 				wishList.remove(req.getShoeType());
 			}
 			
 			if(wishList.isEmpty() && purchaseSchedule.isEmpty()){
-				latchObject.countDown();
+				log.log(Level.INFO, getName() +" has completed all it's purchases and wishList and is now terminating..");
+				System.out.println("CountDownLatch - counted down at "+getName());//debuuuug
+				endLatchObject.countDown();
 				terminate();
 			}
 			
 		});
-		
+	}
+	
+	private void subscribeToTerminationBroadcast(){
 		subscribeBroadcast(TerminationBroadcast.class, req -> {
 			if(req.getToTerminate()==true){
-				latchObject.countDown();
+				log.log(Level.INFO, getName()+" has received a TerminationBroadcast and is terminating");
+				System.out.println("CountDownLatch - counted down at "+getName());//debuuuug
+				endLatchObject.countDown();
 				terminate();
 			}
 		});
-		
+	}
+	
+	@Override
+	protected void initialize() {
+		subscribeToTickBroadcast();
+		subscribeToNewDiscountBroadcast();
+		subscribeToTerminationBroadcast();
 	}
 
 }
