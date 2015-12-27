@@ -1,4 +1,4 @@
-package bgu.spl.run;
+package bgu.spl.app;
 
 import com.google.gson.*;
 import com.google.gson.GsonBuilder;
@@ -28,8 +28,11 @@ public class ShoeStoreRunner {
 	
 	private static final Store storeInstance = Store.getInstance();
 	
-	public static void main(String[] args) throws IOException, InterruptedException {
-
+	public static void main(String[] args){
+		
+		//here we can get exceptions thrown from the MicroService.. 
+		//what should we do with them??
+		//
 			try {
 				
 				System.out.println("hiiii");
@@ -47,6 +50,8 @@ public class ShoeStoreRunner {
 				for(int i=0; i<storage.length; i++){
 					shoeStorageInfo[i]=new ShoeStorageInfo(storage[i].getShoeType(), storage[i].getAmount(), 0);
 				}
+				
+				
 				storeInstance.load(shoeStorageInfo);
 				
 				//Get service params
@@ -105,13 +110,19 @@ public class ShoeStoreRunner {
 					e.execute(client);
 				}
 				
+				/*storeInstance.print();
+				*/
 				latchObject.await();
 				
-				System.out.println("yyyyyyyyyoo");
-				System.out.println(latchObject.getCount());
-				storeInstance.print();
+				synchronized (ShoeStoreRunner.class) {
+					storeInstance.print();
+				}
+				
 
 			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			catch(InterruptedException e){
 				e.printStackTrace();
 			}
 

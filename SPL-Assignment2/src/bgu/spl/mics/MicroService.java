@@ -27,7 +27,6 @@ import bgu.spl.mics.impl.MessageBusImpl;
  */
 public abstract class MicroService implements Runnable {
 
-	//somewhere we need to store a map of callbacks to message types or something like that or the other way around..
 	private static final Logger log = Logger.getLogger( MessageBusImpl.class.getName() );
 	private static final MessageBus messageBusInstance = MessageBusImpl.getInstance();
 	private Map<Class<? extends Message>, Callback> mapMessageTypesToCallbacks = new HashMap<Class<? extends Message>, Callback>();
@@ -65,12 +64,8 @@ public abstract class MicroService implements Runnable {
 	 *                 queue.
 	 */
 	protected  final <R extends Request> void subscribeRequest(Class<R> type, Callback<R> callback) {
-		/*log.log(Level.INFO, "subscribeRequest method was invoked with parameters:"+type+" , "+callback);*/
-
 		messageBusInstance.subscribeRequest(type, this);
 		mapMessageTypesToCallbacks.put(type, callback);
-
-		/*log.log(Level.INFO, this.getName()+" MicroService has succsessfully subscribed to the Request type: "+type);*/
 	}
 
 	/**
@@ -95,13 +90,8 @@ public abstract class MicroService implements Runnable {
 	 *                 queue.
 	 */
 	protected  final <B extends Broadcast> void subscribeBroadcast(Class<B> type, Callback<B> callback) {
-		/*log.log(Level.INFO, "subscribeBroadcast method was invoked with parameters:"+type+" , "+callback);*/
-
 		messageBusInstance.subscribeBroadcast(type, this);
 		mapMessageTypesToCallbacks.put(type, callback);
-
-		/*log.log(Level.INFO, this.getName()+" MicroService has succsessfully subscribed to the Broadcast type: "+type);*/
-
 	}
 
 	/**
@@ -121,12 +111,11 @@ public abstract class MicroService implements Runnable {
 	 *         {@code r.getClass()} and false otherwise.
 	 */
 	protected  final <T> boolean sendRequest(Request<T> r, Callback<T> onComplete) {
-		/*log.log(Level.INFO, "sendRequest method was invoked with parameters "+r+" , "+onComplete);*/
-
-		Boolean bol = messageBusInstance.sendRequest(r, this);
-		mapRequestsToCallbacks.put(r, onComplete); //should we do this only if bol is true?
+		Boolean response = messageBusInstance.sendRequest(r, this);
+		if(response) //we are not sure that this should happen only when the response is true
+			mapRequestsToCallbacks.put(r, onComplete); 
 		
-		return bol; 
+		return response; 
 	}
 
 	/**
@@ -135,12 +124,7 @@ public abstract class MicroService implements Runnable {
 	 * @param b the broadcast message to send
 	 */
 	protected  final void sendBroadcast(Broadcast b) {
-		/*log.log(Level.INFO, "sendBroadcast method was invoked with parameters:"+b);*/
-
 		messageBusInstance.sendBroadcast(b);
-
-		/*log.log(Level.INFO, "The MicroService "+this.getName()+" has initiated sending broadcast "+b);*/
-
 	}
 
 	/**
@@ -154,11 +138,7 @@ public abstract class MicroService implements Runnable {
 	 *               {@code r}.
 	 */
 	protected final <T> void complete(Request<T> r, T result) {
-		/*log.log(Level.INFO, "complete method was invoked with parameters:"+r+" , "+result);*/
-
 		messageBusInstance.complete(r, result);
-
-		/*log.log(Level.INFO, "");*/
 	}
 
 	/**
@@ -187,40 +167,35 @@ public abstract class MicroService implements Runnable {
 	 * otherwise you will end up in an infinite loop.
 	 */
 	@Override
-	public  final void run() {
+	public  final void run(){
 		
 		initialize();
+		
 		while (!terminated) {
-			try {
-				Message m = messageBusInstance.awaitMessage(this);
-				Class[] y = m.getClass().getInterfaces();
+			
+				try {
+					Message receivedMessage = messageBusInstance.awaitMessage(this);
 				
-					if(y[0].getName().equals("bgu.spl.mics.Message")){ //RequestCompleted
-						RequestCompleted r = (RequestCompleted)m;
+					if(receivedMessage.getClass().getName().equals("bgu.spl.mics.RequestCompleted")){ 
+						//If message is of type RequestCompleted
+						RequestCompleted r = (RequestCompleted)receivedMessage;	
 						Callback callback = mapRequestsToCallbacks.get(r.getCompletedRequest());
 						callback.call(r.getResult());
 					}
-					else if(y[0].getName().equals("bgu.spl.mics.Request") || y[0].getName().equals("bgu.spl.mics.Broadcast")){
-						if(!mapMessageTypesToCallbacks.containsKey(m.getClass()))
-							log.log(Level.WARNING, "Callback was not found for the message: "+m);
+					else{
+						//If message is of type Broadcast or Request
+						if(!mapMessageTypesToCallbacks.containsKey(receivedMessage.getClass()))
+							log.log(Level.WARNING, "Callback was not found for the message: "+receivedMessage);
 						else{
-							Callback callback = mapMessageTypesToCallbacks.get(m.getClass());
-							callback.call(m);
+							Callback callback = mapMessageTypesToCallbacks.get(receivedMessage.getClass());
+							callback.call(receivedMessage);
 						}
 					}
-					else {
-						//DONT KNOW WHAT TO DO WITH BROADCASTS..
-						System.out.println("damn");
-					}
-				
-				
-					/*log.log(Level.WARNING, "Callback was not found for the message: "+m);*/
-				
-			} catch (InterruptedException e) {
-				System.out.println("damn"); //NNNNNNNNNNEED TO DELETEEE!
-			}
-			
+				} catch (InterruptedException e) {
+					log.log(Level.SEVERE, "MicroService - run - Exception! InterruptedException was received by awaitMessage");
+				}
 		}
+		
 		messageBusInstance.unregister(this); 
 		
 	}

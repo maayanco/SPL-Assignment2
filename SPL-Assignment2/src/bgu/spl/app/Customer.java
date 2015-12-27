@@ -1,4 +1,4 @@
-package bgu.spl.run;
+package bgu.spl.app;
 
 import bgu.spl.app.PurchaseSchedule;
 

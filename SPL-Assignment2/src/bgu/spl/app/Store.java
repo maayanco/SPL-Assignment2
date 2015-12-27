@@ -94,22 +94,29 @@ public class Store {
 	}
 	
 	public void print(){
-		System.out.println("Shoes:");
+		
+		System.out.println(" ");
+		System.out.println("-------------------Shoes In Stock:-------------------");
 		for(ShoeStorageInfo item : shoeStorageList){
-			System.out.println("item: type- "+item.getShoeType()+" amount: "
-											 +item.getAmountOnStorage()+" discounted amount: "
-											 +item.getDiscountedAmount());
+			System.out.println("--------- Type: "+item.getShoeType());
+			System.out.println("--------- Amount: "+item.getAmountOnStorage());
+			System.out.println("--------- Discounted amount: "+item.getDiscountedAmount());
+			System.out.println("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
 		}
 		
-		System.out.println("Receipts:");
+		System.out.println(" ");
+		
+		System.out.println("-------------------Receipts:-------------------");
 		for(Receipt item : receiptList){
-			System.out.println("item:"+"seller: "+item.getSeller()
-												 +"customer: "+item.getCustomer()
-												 +"shoe type: "+item.getShoeType()
-												 +"discount: "+item.isDiscount()
-												 +"issued tick: "+item.getIssuedTick()
-												 +"request tick: "+item.getRequestTick()
-												 +"amount sold: "+item.getAmountSold());
+			System.out.println("--------- seller: "+item.getSeller());
+			System.out.println("--------- customer: "+item.getCustomer());
+			System.out.println("--------- shoe type: "+item.getShoeType());
+			System.out.println("--------- discount: "+item.isDiscount());
+			System.out.println("--------- issued tick: "+item.getIssuedTick());
+			System.out.println("--------- Request tick: "+item.getRequestTick());
+			System.out.println("--------- Amount sold: "+item.getAmountSold());
+			System.out.println("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+			
 		}
 	}
 	

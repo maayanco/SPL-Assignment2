@@ -50,9 +50,9 @@ public class MessageBusImpl implements MessageBus{
 		System.setProperty("java.util.logging.SimpleFormatter.format",
 				"%1$tF %1$tT %4$s %2$s %5$s%6$s%n");
 	
-		mapMicroServicesToQueues = new HashMap<MicroService, LinkedBlockingQueue<Message>>();
+		mapMicroServicesToQueues = new ConcurrentHashMap<MicroService, LinkedBlockingQueue<Message>>();
 		mapRequestTypesToMicroServices = new HashMap<Class<? extends Message>, RoundRobinList>();
-		mapBroadcastTypesToMicroServices = new HashMap<Class<? extends Message>,RoundRobinList>();
+		mapBroadcastTypesToMicroServices = new ConcurrentHashMap<Class<? extends Message>,RoundRobinList>();
 		mapRequestsToMicroServices = new HashMap<Request<?>, MicroService>();
 		
 	}
@@ -90,8 +90,9 @@ public class MessageBusImpl implements MessageBus{
 			map= mapBroadcastTypesToMicroServices;
 		}
 		
-		if(map.containsKey(type)){ //if the type already exists in the map
-			RoundRobinList microServicesSubscribedToTypeList = map.get(type); //get the linkedList
+		//If the type already exists in the map
+		if(map.containsKey(type)){ 
+			RoundRobinList microServicesSubscribedToTypeList = map.get(type); 
 			if(!microServicesSubscribedToTypeList.contains(m)){
 				microServicesSubscribedToTypeList.add(m);
 			}
@@ -138,7 +139,7 @@ public class MessageBusImpl implements MessageBus{
      * <p>
      * @param b the message to add to the queues.
      */
-	public  void sendBroadcast(Broadcast b) {
+	public synchronized void sendBroadcast(Broadcast b) {
 		
 		if(mapBroadcastTypesToMicroServices.containsKey(b.getClass())){ 
 			RoundRobinList roundRobinList = mapBroadcastTypesToMicroServices.get(b.getClass());
@@ -150,8 +151,10 @@ public class MessageBusImpl implements MessageBus{
 			}
 		}
 		else{
-			log.log(Level.WARNING, "MessageBusImpl - sendBroadcast - The type "+b.getClass()+" wasn't found in the mapBroadcastTypesToMicroServices - unable to send broadcast");
+			log.log(Level.WARNING, "There was no MicroService found which is subscribed to the message type: "+b.getClass());
 		}
+		
+		
 	}
 	
 	
@@ -321,7 +324,7 @@ public class MessageBusImpl implements MessageBus{
 	 * @param m the MicroService requesting it's queue 
 	 * @return the queue which is mapped to {@code m}
  	 */
-	private synchronized LinkedBlockingQueue<Message> getQueueByMicroService(MicroService m){
+	private LinkedBlockingQueue<Message> getQueueByMicroService(MicroService m){
 		
 		Iterator it = mapMicroServicesToQueues.entrySet().iterator();
 		while(it.hasNext()){

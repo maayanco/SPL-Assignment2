@@ -27,7 +27,7 @@ public class TimeService extends MicroService{
 		
 		
 	}
-	
+
 	@Override
 	protected void initialize(){
 		Timer timer = new Timer();
@@ -43,14 +43,18 @@ public class TimeService extends MicroService{
 					sendBroadcast(b); //tell everyone to terminate
 					latchObject.countDown();
 					terminate(); //so graceful!
-					latchObject.countDown();
+					this.cancel();
+					//latchObject.countDown();
 				}
-				TickBroadcast b = new TickBroadcast(currentTick);
-				sendBroadcast(b);
-				//System.out.println("current time is: "+currentTick);
+				else{
+					TickBroadcast b = new TickBroadcast(currentTick);
+					sendBroadcast(b);
+					//System.out.println("current time is: "+currentTick);
+				}
 			}
 		};
 		
-		timer.scheduleAtFixedRate(task, 0, speed);	
+		timer.scheduleAtFixedRate(task, 0, speed);
+		
 	}
 }

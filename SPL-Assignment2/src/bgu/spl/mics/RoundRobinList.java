@@ -5,14 +5,17 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class RoundRobinList{
 	
-	private LinkedList<MicroService> list;
+	private LinkedBlockingQueue<MicroService> list;
 	private int index;
 	
 	public RoundRobinList(){
-		list = new LinkedList<MicroService>();
+		list = new LinkedBlockingQueue<MicroService>();
 		index=-1;
 	}
 
@@ -47,15 +50,40 @@ public class RoundRobinList{
 		return bool;
 	}
 
+	public int getIndex(Object o){
+		int i=0;
+		for(MicroService m : list){
+			if(m.equals(o))
+				return i;
+			i++;
+		}
+		
+		return -1;
+	}
+	
+	public MicroService getObjectAt(int index){
+		int i=0;
+		for(MicroService m : list){
+			if(i==index)
+				return m;
+			i++;
+		}
+		return null;
+	}
+	
 	
 	public boolean remove(Object o) {
-		int indexOfObj = list.indexOf(o);
+		int indexOfObj = getIndex(o); //ooooooh this is so! maybe not gonna work..!
 		Boolean bool = list.remove((MicroService)o);
-		if(bool){
-			if(indexOfObj<index)
+		if(list.isEmpty())
+			index=-1;
+		else if(bool){
+			if(indexOfObj<index){
 				index=(index-1)%list.size();
-			else
-				index=index%list.size();  //error
+			}
+			else{
+				index=index%list.size(); 
+			}
 		}
 		return bool;
 	}
@@ -66,13 +94,13 @@ public class RoundRobinList{
 
 
 	public Object getNext(){
-		Object obj= list.get(index);
+		MicroService obj = getObjectAt(index); //verrrrrrrrrry dangerous!!
 		updateIndex(1);
 		return obj;
 	}
 	
 	public Object get(int index) {
-		Object obj = list.get(index);
+		MicroService obj = getObjectAt(index); //veryyyyyyy dangerous!
 		index=(index+1)%list.size();
 		return obj;
 	}
