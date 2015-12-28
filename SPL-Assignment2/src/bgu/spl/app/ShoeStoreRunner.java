@@ -17,6 +17,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -32,6 +33,8 @@ public class ShoeStoreRunner {
 	
 	public static void main(String[] args){
 		
+		String jsonPath=args[0];
+
 		//here we can get exceptions thrown from the MicroService.. 
 		//what should we do with them??
 		//
@@ -39,7 +42,7 @@ public class ShoeStoreRunner {
 				
 				Gson gson = new Gson();
 				
-				BufferedReader br = new BufferedReader(new FileReader("C:\\Users\\Maayan\\Desktop\\sample.json"));
+				BufferedReader br = new BufferedReader(new FileReader(jsonPath));
 
 				//convert the json string back to object
 				StoreConfiguration obj = gson.fromJson(br, StoreConfiguration.class);
@@ -65,10 +68,8 @@ public class ShoeStoreRunner {
 				int numberOfThreads = 2+sellingServicesNum+factoriesNum+clientsNum;
 				
 				ExecutorService e = Executors.newFixedThreadPool(numberOfThreads);
-				CountDownLatch startLatchObject = new CountDownLatch(numberOfThreads);
+				CountDownLatch startLatchObject = new CountDownLatch(numberOfThreads-1);
 				CountDownLatch endLatchObject = new CountDownLatch(numberOfThreads);
-				
-				System.out.println("number of threads: "+numberOfThreads); //debugg
 				
 				//Creating the time service
 				TimeService timeService = new TimeService(timeParams.getSpeed(), timeParams.getDuration(), startLatchObject, endLatchObject);
@@ -78,7 +79,7 @@ public class ShoeStoreRunner {
 				Discount[] discountArr = managerParams.getDiscountSchedule();
 				LinkedList<DiscountSchedule> discountScheduleLst = new LinkedList<DiscountSchedule>();
 				for(int i=0; i<discountArr.length; i++){
-					DiscountSchedule sch = new DiscountSchedule(discountArr[i].getShoeType(), discountArr[i].getAmount(), discountArr[i].getTick());
+					DiscountSchedule sch = new DiscountSchedule(discountArr[i].getShoeType(), discountArr[i].getTick(),discountArr[i].getAmount());
 					discountScheduleLst.add(sch);
 				}
 				ManagementService managmentService = new ManagementService(discountScheduleLst, startLatchObject, endLatchObject);

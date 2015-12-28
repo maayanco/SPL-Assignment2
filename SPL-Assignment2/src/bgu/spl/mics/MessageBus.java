@@ -15,7 +15,7 @@ public interface MessageBus {
      * @param type the type to subscribe to
      * @param m    the subscribing micro-service
      */
-    void subscribeRequest(Class<? extends Request> type, MicroService m);
+    void subscribeRequest(Class<? extends Request<?>> type, MicroService m);
 
     /**
      * subscribes {@code m} to receive {@link Broadcast}s of type {@code type}.

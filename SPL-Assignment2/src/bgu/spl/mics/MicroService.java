@@ -63,7 +63,7 @@ public abstract class MicroService implements Runnable {
 	 *                 {@code type} are taken from this micro-service message
 	 *                 queue.
 	 */
-	protected  final <R extends Request> void subscribeRequest(Class<R> type, Callback<R> callback) {
+	protected final <R extends Request<?>> void subscribeRequest(Class<R> type, Callback<R> callback){
 		messageBusInstance.subscribeRequest(type, this);
 		mapMessageTypesToCallbacks.put(type, callback);
 	}

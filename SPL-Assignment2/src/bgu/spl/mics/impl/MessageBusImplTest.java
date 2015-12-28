@@ -11,25 +11,15 @@ import org.junit.Test;
 import bgu.spl.mics.MicroService;
 import bgu.spl.mics.Request;
 import bgu.spl.mics.Broadcast;
+import bgu.spl.mics.Message;
+import bgu.spl.mics.MessageBus;
 
 public class MessageBusImplTest {
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		
-		class MicroServiceImpl extends MicroService{
-
-			public MicroServiceImpl(String name) {
-				super(name);
-				// TODO Auto-generated constructor stub
-			}
-
-			@Override
-			protected void initialize() {
-				//here i will write to what types of messages i am subscribed to 
-			}
-			
-		}
+				
 		
 		class RequestImpl implements Request<String>{
 			
@@ -71,8 +61,39 @@ public class MessageBusImplTest {
 	
 	@Test
 	public void testSubscribeRequest() {
+		class MicroServiceImpl extends MicroService{
+
+			public MicroServiceImpl(String name) {
+				super(name);
+				// TODO Auto-generated constructor stub
+			}
+
+			@Override
+			protected void initialize() {
+				subscribeBroadcast();
+			}
+			
+		}
+
 		
-		fail("Not yet implemented");
+		MicroServiceImpl m = new MicroServiceImpl("ma");
+		
+		MessageBusImpl messageBusInstance = MessageBusImpl.getInstance();
+		try {
+			System.out.println("yooo lital how are you today, this is meee ");
+			
+			Message message = messageBusInstance.awaitMessage(m);
+			
+			message.wait(1);
+			
+			if(message==null)
+				fail("yooooooooo Litalllllllllll what's upppppppppppppp");
+			else
+				fail("hhhhhhhh");
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	@Test

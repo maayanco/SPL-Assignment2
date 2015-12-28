@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
@@ -15,7 +16,7 @@ import bgu.spl.mics.impl.MessageBusImpl;
 
 public class WebsiteClientService extends MicroService {
 	
-	private Map<Integer, PurchaseSchedule> purchaseSchedule;
+	private Map<Integer, LinkedList<PurchaseSchedule>> purchaseScheduleWithList;
 	private Set<String> wishList;
 	private int currentTick;
 	private CountDownLatch startLatchObject;
@@ -28,9 +29,19 @@ public class WebsiteClientService extends MicroService {
 		super(name);
 		
 		//Initialize the purchaseSchedule map and clone the received list
-		purchaseSchedule = new HashMap<Integer, PurchaseSchedule>();
+		purchaseScheduleWithList = new HashMap<Integer, LinkedList<PurchaseSchedule>>();
 		for(PurchaseSchedule item : purchaseScheduleList){
-			this.purchaseSchedule.put(item.getTick(), item);
+			LinkedList<PurchaseSchedule> listOfPurchasesAtTick;
+			
+			if(purchaseScheduleWithList.containsKey(item.getTick())){
+				listOfPurchasesAtTick = purchaseScheduleWithList.get(item.getTick());
+			}
+			else{
+				listOfPurchasesAtTick = new LinkedList<PurchaseSchedule>();
+			}
+			
+			listOfPurchasesAtTick.add(item);
+			purchaseScheduleWithList.put(item.getTick(), listOfPurchasesAtTick);
 		}
 		
 		//Initialize the wishList and clone it
@@ -47,19 +58,36 @@ public class WebsiteClientService extends MicroService {
 	}
 	
 	private void subscribeToTickBroadcast(){
+		
 		subscribeBroadcast(TickBroadcast.class, req -> {
 			currentTick=req.getTick();
 			
-			if(purchaseSchedule.containsKey(currentTick)){
-				PurchaseSchedule purchaseRequestInfo = purchaseSchedule.get(currentTick);
-				purchaseSchedule.remove(purchaseRequestInfo); 
-				PurchaseOrderRequest purchaseRequest = new PurchaseOrderRequest(this.getName(), purchaseRequestInfo.getShoeType(),false,currentTick, 1);
-				log.log(Level.INFO, getName()+" has sent a purchase request for "+purchaseRequest.getAmountSold()+" shoes of type "+purchaseRequest.getShoeType()+" at tick "+purchaseRequest.getRequestTick());
-				sendRequest(purchaseRequest, reqq -> {//should i check the content of the reqq??? check for null
-					complete(purchaseRequest,reqq); //TODO: WHAT???? Is this what supposed to happen??
-				});
+			if(purchaseScheduleWithList.containsKey(currentTick)){
+				LinkedList<PurchaseSchedule> listOfPurchasesAtCurrentTick = purchaseScheduleWithList.get(currentTick);
+				for(PurchaseSchedule futurePurchase : listOfPurchasesAtCurrentTick){
+					PurchaseOrderRequest purchaseRequest = new PurchaseOrderRequest(this.getName(), futurePurchase.getShoeType(),false,currentTick, 1);
+					log.log(Level.INFO, getName()+" has sent a purchase request for "+purchaseRequest.getAmountSold()+" shoes of type "+purchaseRequest.getShoeType()+" at tick "+purchaseRequest.getRequestTick());
+					sendRequest(purchaseRequest, reqq -> {//should i check the content of the reqq??? check for null
+						// maybe this code should happen only if reqq!=null
+							//Delete from data structs
+							if(purchaseScheduleWithList.containsKey(currentTick)){
+								LinkedList<PurchaseSchedule> listOfPurchasesAtTick = purchaseScheduleWithList.get(currentTick);
+								for(PurchaseSchedule item: listOfPurchasesAtTick){
+									wishList.remove(item.getShoeType());
+								}
+								listOfPurchasesAtTick.remove(futurePurchase);
+								if(listOfPurchasesAtTick.isEmpty())
+									purchaseScheduleWithList.remove(currentTick);
+							}
+							
+						
+						//complete(purchaseRequest,reqq); // this seems not good! //TODO: SEEMS LIKE THERE'S A BUG HERE
+					});
+					
+				}
 			}
-			if(wishList.isEmpty() && purchaseSchedule.isEmpty()){
+			
+			if(wishList.isEmpty() && purchaseScheduleWithList.isEmpty()){
 				log.log(Level.INFO, getName() +" has completed all it's purchases and wishList and is now terminating..");
 				System.out.println("CountDownLatch - counted down at "+getName());//debuuuug
 				endLatchObject.countDown();
@@ -68,19 +96,25 @@ public class WebsiteClientService extends MicroService {
 		});
 	}
 	
+	
+	
 	private void subscribeToNewDiscountBroadcast(){
+		
 		subscribeBroadcast(NewDiscountBroadcast.class, req -> {
 			log.log(Level.INFO, getName()+" has received a new Discount Broadcast for "+req.getAmountOnSale()+" shoes of type "+req.getShoeType());
 			if(wishList.contains(req.getShoeType())){
 				PurchaseOrderRequest purchaseRequest = new PurchaseOrderRequest(this.getName() , req.getShoeType(), true ,currentTick, 1);
 				sendRequest(purchaseRequest, reqq -> {
 					log.log(Level.INFO, getName()+ " has sent a new purchase order for 1 shoe of type "+req.getShoeType());
-					complete(purchaseRequest, reqq); //TODO: WHAT?? IS THIS WHAT SUPPOSED TO HAPPEN?
+					//if(reqq!=null){
+					wishList.remove(req.getShoeType()); //TODO: Maybe this should be after the sendRequest
+					//}
+					//complete(purchaseRequest, reqq); //TODO: WHAT?? IS THIS WHAT SUPPOSED TO HAPPEN?
 				});
-				wishList.remove(req.getShoeType());
+				
 			}
 			
-			if(wishList.isEmpty() && purchaseSchedule.isEmpty()){
+			if(wishList.isEmpty() && purchaseScheduleWithList.isEmpty()){
 				log.log(Level.INFO, getName() +" has completed all it's purchases and wishList and is now terminating..");
 				System.out.println("CountDownLatch - counted down at "+getName());//debuuuug
 				endLatchObject.countDown();

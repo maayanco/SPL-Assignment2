@@ -18,6 +18,7 @@ public class ShoeFactoryService extends MicroService{
 	private Map<ManufacturingOrderRequest,Integer> mapManufacturingOrdersToShoesNumber; 
 	private CountDownLatch startLatchObject;
 	private CountDownLatch endLatchObject;
+	private Store storeInstance = Store.getInstance();
 	
 	private static final Logger log = Logger.getLogger( MessageBusImpl.class.getName() );
 	
@@ -81,6 +82,7 @@ public class ShoeFactoryService extends MicroService{
 			log.log(Level.INFO, getName()+" has created a new shoe of type "+manufactringOrder.getShoeType());
 			if(numberOfShoesLeftToProduce==0){
 				Receipt receipt = new Receipt(this.getName(),"store", manufactringOrder.getShoeType(),false, currentTick, manufactringOrder.getInitialRequestTick(), manufactringOrder.getAmount() );
+				storeInstance.file(receipt);
 				complete(manufactringOrder, receipt);
 				mapManufacturingOrdersToShoesNumber.remove(manufactringOrder);
 				queueManufacturingOrders.remove(manufactringOrder);

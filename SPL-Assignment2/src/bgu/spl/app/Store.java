@@ -24,6 +24,7 @@ public class Store {
 	}
 	
 	public void load (ShoeStorageInfo[] storage){
+		shoeStorageList.clear();
 		for(ShoeStorageInfo item : storage){
 			shoeStorageList.add(item);
 		}
@@ -38,26 +39,39 @@ public class Store {
 				locatedShoe = item;
 		}
 		 
+		//no shoe was located of the type, or there is no amount of it on storage
 		if(locatedShoe==null || locatedShoe.getAmountOnStorage()==0) 
 			return BuyResult.NOT_IN_STOCK;
-		
+		//if there is a request to take only with discount and there is no amount in stock
 		else if(onlyDiscount && (locatedShoe.getDiscountedAmount()==0))
 			return BuyResult.NOT_ON_DISCOUNT;
 		
-		else if(onlyDiscount && (locatedShoe.getDiscountedAmount()>1)){
+		else if(onlyDiscount && (locatedShoe.getDiscountedAmount()>0)){
 			int currentDiscountedAmount = locatedShoe.getDiscountedAmount();
+			int currentAmount = locatedShoe.getAmountOnStorage();
 			locatedShoe.setDiscountedAmount(currentDiscountedAmount-1);
+			locatedShoe.setAmountOnStorage(currentAmount-1);
 			return BuyResult.DISCOUNTED_PRICE;
 		}
 		
-		else if(!onlyDiscount && (locatedShoe.getAmountOnStorage()>1)){
+		else if(!onlyDiscount && (locatedShoe.getAmountOnStorage()>0)){
+			int currentDiscountedAmount = locatedShoe.getDiscountedAmount();
 			int currentAmount = locatedShoe.getAmountOnStorage();
+			if(currentDiscountedAmount>0)
+				locatedShoe.setDiscountedAmount(currentDiscountedAmount-1);
 			locatedShoe.setAmountOnStorage(currentAmount-1);
 			return BuyResult.REGULAR_PRICE;
 		}
 		
 		//DEBUUUG TO FIND OUT WHY ARE WE RETURNING NULL
-		System.out.println("HELLLLO THIS IS THE STORE - WE ARE ABOUT TO RETURN NULL. You wanted show type: "+shoeType+" discount status: "+onlyDiscount+". and what we have is:");
+		System.out.println("HELLLLO THIS IS THE STORE - WE ARE ABOUT TO RETURN NULL. You wanted show type: "+shoeType+" discount status: "+onlyDiscount);
+		if(locatedShoe==null)
+			System.out.println("we haven't located your shoeType");
+		else{
+			System.out.println(" the params of the located shoe are: amountOnStorage:"+locatedShoe.getAmountOnStorage()+" type: "+locatedShoe.getShoeType()+" discountedAmount :"+locatedShoe.getDiscountedAmount());
+		}
+		System.out.println("what we have is:");
+		
 		printShoes();
 		return null;
 			
@@ -71,24 +85,32 @@ public class Store {
 		updateAmount(shoeType,amount,TYPE_DISCOUNT);
 	}
 	
-	private void updateAmount(String shoeType,int amountToAdd, String type){
-		ShoeStorageInfo locatedShoe=null;
+	private ShoeStorageInfo locateShoeInStorage(String shoeType){
 		for(ShoeStorageInfo item : shoeStorageList){
-			if(item.getShoeType().equals(shoeType)){
-				locatedShoe=item;
-			}
+			if(item.getShoeType().equals(shoeType))
+				return item;
 		}
+		return null;
+	}
+	
+	private void updateAmount(String shoeType,int amountToAdd, String type){
+		
+		ShoeStorageInfo locatedShoe=locateShoeInStorage(shoeType);
 		
 		if(locatedShoe==null){
 			shoeStorageList.add(new ShoeStorageInfo(shoeType, 0, 0));
+			locatedShoe=locateShoeInStorage(shoeType);
 		}
-		else if(type.equals(TYPE_REGULAR_AMOUNT)){
+		
+		if(type.equals(TYPE_REGULAR_AMOUNT)){
 			int currentAmount = locatedShoe.getAmountOnStorage();
 			locatedShoe.setAmountOnStorage(currentAmount+amountToAdd);
 		}
 		else if(type.equals(TYPE_DISCOUNT)){
-			int currentDiscountedAmount=locatedShoe.getDiscountedAmount();
-			locatedShoe.setDiscountedAmount(currentDiscountedAmount+amountToAdd);
+			int currentAmount=locatedShoe.getAmountOnStorage();
+			int currentDiscountedAmount = locatedShoe.getDiscountedAmount();
+			int amountOfDiscountAfterAddition = currentDiscountedAmount+amountToAdd;
+			locatedShoe.setDiscountedAmount(Math.min(amountOfDiscountAfterAddition, currentAmount));
 		}
 	}
 	
@@ -113,7 +135,9 @@ public class Store {
 	
 	private void printReceipts(){
 		System.out.println("-------------------Receipts:-------------------");
+		int index=1;
 		for(Receipt item : receiptList){
+			System.out.println("--------- receipt num: "+index);
 			System.out.println("--------- seller: "+item.getSeller());
 			System.out.println("--------- customer: "+item.getCustomer());
 			System.out.println("--------- shoe type: "+item.getShoeType());
@@ -122,7 +146,7 @@ public class Store {
 			System.out.println("--------- Request tick: "+item.getRequestTick());
 			System.out.println("--------- Amount sold: "+item.getAmountSold());
 			System.out.println("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-			
+			index++;
 		}	
 	}
 	

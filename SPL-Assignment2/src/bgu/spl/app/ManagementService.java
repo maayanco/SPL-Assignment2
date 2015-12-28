@@ -18,7 +18,8 @@ public class ManagementService extends MicroService{
 	private static final Logger log = Logger.getLogger( MessageBusImpl.class.getName() );
 	
 	private int currentTick;
-	private Map<Integer,DiscountSchedule> mapTicksToDiscountSchedules;
+	/*private Map<Integer,DiscountSchedule> mapTicksToDiscountSchedules;*/
+	private Map<Integer, LinkedList<DiscountSchedule>> mapTicksToDiscountSchedules;
 	private Map<String, LinkedList<ManufacturingOrderRequest>> mapShoeTypesToManufacturingOrders;
 	private Map<ManufacturingOrderRequest,LinkedList<RestockRequest>> mapManufacturingOrderRequestsToRestockRequests; 
 	private CountDownLatch startLatchObject;
@@ -28,13 +29,31 @@ public class ManagementService extends MicroService{
 		super("manager");
 		
 		//Initialize map and clone the received list
-		mapTicksToDiscountSchedules = new ConcurrentHashMap<Integer,DiscountSchedule>();
+		/*mapTicksToDiscountSchedules = new ConcurrentHashMap<Integer,DiscountSchedule>();
 		for(DiscountSchedule item : discountScheduleList){
 			mapTicksToDiscountSchedules.put(item.getTick(), item);
+		}*/
+		
+		mapTicksToDiscountSchedules = new ConcurrentHashMap<Integer, LinkedList<DiscountSchedule>>();
+		for(DiscountSchedule item: discountScheduleList){
+			if(mapTicksToDiscountSchedules.containsKey(item.getTick())){
+				LinkedList<DiscountSchedule> currentListOfDiscounts = mapTicksToDiscountSchedules.get(item.getTick());
+				currentListOfDiscounts.add(item);
+				mapTicksToDiscountSchedules.replace(item.getTick(), currentListOfDiscounts);
+			}
+			else{
+				LinkedList<DiscountSchedule> newListOfDiscounts = new LinkedList<DiscountSchedule>();
+				newListOfDiscounts.add(item);
+				mapTicksToDiscountSchedules.put(item.getTick(), newListOfDiscounts);
+			}
 		}
 		
+		//DEBUUUUG - DELETE THIS CODE:
+		/*System.out.println("we are going to print the mapTicksToDiscountSchedules");
+		mapTicksToDiscountSchedules.*/
+		//END OF CODE TO BE DELETED
+		
 		mapShoeTypesToManufacturingOrders= new ConcurrentHashMap<String, LinkedList<ManufacturingOrderRequest>>();
-		// TODO Auto-generated constructor stub
 		
 		mapManufacturingOrderRequestsToRestockRequests = new ConcurrentHashMap<ManufacturingOrderRequest,LinkedList<RestockRequest>>();
 		
@@ -44,13 +63,20 @@ public class ManagementService extends MicroService{
 		this.endLatchObject=endLatchObject;
 	}
 
+
 	private void subscribeToTickBroadcast(){
 		subscribeBroadcast(TickBroadcast.class, req -> {
 			currentTick = req.getTick();
 			if(mapTicksToDiscountSchedules.containsKey(currentTick)){
-				DiscountSchedule discount = mapTicksToDiscountSchedules.get(currentTick);
-				NewDiscountBroadcast b = new NewDiscountBroadcast(discount.getShoeType(), discount.getAmount());
-				sendBroadcast(b);
+				LinkedList<DiscountSchedule> listOfDiscounts = mapTicksToDiscountSchedules.get(currentTick);
+				for(DiscountSchedule discount: listOfDiscounts){
+					System.out.println("debugging a discount! currentTick: "+currentTick+" the type of the items to be on discount "+discount.getShoeType()+" the amount to be on discount: "+discount.getAmount()+" the tick on which the discount is to be performed: "+discount.getTick());
+					NewDiscountBroadcast b = new NewDiscountBroadcast(discount.getShoeType(), discount.getAmount());
+					sendBroadcast(b);
+					log.log(Level.INFO, "The manager has sent a newDiscountBroadcast for "+b.getAmountOnSale()+" shoes of type "+b.getShoeType()+" the tick of sending: "+currentTick);
+					storeInstance.addDiscount(discount.getShoeType(), discount.getAmount());
+				}
+				
 			}
 		});
 		

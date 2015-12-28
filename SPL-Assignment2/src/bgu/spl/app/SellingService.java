@@ -58,7 +58,10 @@ public class SellingService extends MicroService{
 						log.log(Level.INFO, getName()+" sent a request to restock which was sucsessfull ");
 						//*********** not sure about this receipt thing... was not explicitly written in the assignment guidlines
 						Receipt receipt = new Receipt(this.getName(), req.getCustomer(), req.getShoeType(), req.isDiscount(), currentTick, req.getRequestTick(), req.getAmountSold());
-						complete(req, receipt);
+						storeInstance.file(receipt);
+						/*log.log(Level.SEVERE, "!!!111we are now going to perform complete on the purchaseOrderRequest:"+req+" with the receipt:"+receipt);
+						log.log(Level.SEVERE, "!!!222 gonna perform complete and maybe NullPointerException");*/
+						complete(req, receipt); ///Causes NullPointerExceptionnn
 					}
 					else{
 						log.log(Level.INFO, getName()+" sent a request to restock which wasn't succsessfull");
