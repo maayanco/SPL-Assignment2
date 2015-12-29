@@ -59,7 +59,7 @@ public class ManagementService extends MicroService{
 		
 		log.log(Level.INFO, getName()+" service was initialized");
 		this.startLatchObject=startLatchObject;
-		startLatchObject.countDown();
+		/*startLatchObject.countDown();*/
 		this.endLatchObject=endLatchObject;
 	}
 
@@ -150,9 +150,10 @@ public class ManagementService extends MicroService{
 					LinkedList<RestockRequest> listOfRestockRequestsHandledByManufacturingOrder = mapManufacturingOrderRequestsToRestockRequests.get(manufacturingRequest);
 					int freeAmount = amountToOrder-listOfRestockRequestsHandledByManufacturingOrder.size();
 					storeInstance.add(shoeType, freeAmount);
-					storeInstance.file(resultReceipt);
+					//storeInstance.file(resultReceipt);
 					LinkedList<RestockRequest> list = mapManufacturingOrderRequestsToRestockRequests.get(manufacturingRequest);
 					for(RestockRequest item : list){
+						log.log(Level.INFO, getName()+" has completed a restock request for "+item.getAmountRequested()+" shoes of type "+item.getShoeType()+" which was originaly issued at tick "+item.getInitialRequestTick());
 						complete(item, true); //we complete all the restock requests that were handled by this manufactring order..
 					}
 				});
@@ -183,6 +184,7 @@ public class ManagementService extends MicroService{
 		subscribeToTickBroadcast();
 		subscribeToRestockRequest();
 		subscribeToTerminationBroadcast();
+		startLatchObject.countDown();
 	}
 
 }

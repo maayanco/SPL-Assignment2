@@ -30,7 +30,7 @@ public class ShoeFactoryService extends MicroService{
 		
 		log.log(Level.INFO, getName()+" factory was initialized");
 		this.startLatchObject=startLatchObject;
-		startLatchObject.countDown();
+		/*startLatchObject.countDown();*/
 		this.endLatchObject=endLatchObject;
 	}
 
@@ -40,6 +40,7 @@ public class ShoeFactoryService extends MicroService{
 		subscribeToTickBroadcast();
 		subscribeToManufacturingOrderRequest();
 		subscribeToTerminationBroadcast();
+		startLatchObject.countDown();
 	}
 	
 	private void subscribeToTickBroadcast(){
@@ -80,15 +81,17 @@ public class ShoeFactoryService extends MicroService{
 			int numberOfShoesLeftToProduce = mapManufacturingOrdersToShoesNumber.get(manufactringOrder);
 			numberOfShoesLeftToProduce=numberOfShoesLeftToProduce-1;
 			log.log(Level.INFO, getName()+" has created a new shoe of type "+manufactringOrder.getShoeType());
-			if(numberOfShoesLeftToProduce==0){
+			if(numberOfShoesLeftToProduce==-1){
 				Receipt receipt = new Receipt(this.getName(),"store", manufactringOrder.getShoeType(),false, currentTick, manufactringOrder.getInitialRequestTick(), manufactringOrder.getAmount() );
 				storeInstance.file(receipt);
+				log.log(Level.INFO, getName()+" has completed a manufacturing request for "+manufactringOrder.getAmount()+" shoes of type "+manufactringOrder.getShoeType()+" which was originally issued at tick: "+manufactringOrder.getInitialRequestTick());
 				complete(manufactringOrder, receipt);
 				mapManufacturingOrdersToShoesNumber.remove(manufactringOrder);
 				queueManufacturingOrders.remove(manufactringOrder);
 			}
 			else{
-				mapManufacturingOrdersToShoesNumber.replace(manufactringOrder, numberOfShoesLeftToProduce-1);
+				mapManufacturingOrdersToShoesNumber.replace(manufactringOrder, numberOfShoesLeftToProduce);
+				//mapManufacturingOrdersToShoesNumber.replace(manufactringOrder, numberOfShoesLeftToProduce-1);
 			}
 		}
 	}

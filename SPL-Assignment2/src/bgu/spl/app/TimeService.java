@@ -24,7 +24,7 @@ public class TimeService extends MicroService{
 	public TimeService(int speed, int duration, CountDownLatch startLatchObject, CountDownLatch endLatchObject) throws InterruptedException {
 		super("timer");
 		
-		this.currentTick=-3;
+		this.currentTick=0;
 		this.speed=speed;
 		this.duration=duration;
 		
@@ -36,6 +36,9 @@ public class TimeService extends MicroService{
 
 	@Override
 	protected void initialize(){
+		
+		
+		
 		Timer timer = new Timer();
 		
 		TimerTask task = new TimerTask() {
@@ -44,15 +47,9 @@ public class TimeService extends MicroService{
 			public void run() {
 					currentTick=currentTick+1;
 					log.log(Level.INFO, "CURRENT TICK:"+currentTick);
-					if(currentTick==duration){
+					if(currentTick==duration+1){
 						TerminationBroadcast b = new TerminationBroadcast(true);
 						sendBroadcast(b); 
-						System.out.println("CountDownLatch - counted down at "+getName());//debuuuug
-						endLatchObject.countDown();
-						terminate(); 
-						this.cancel();
-						
-						//this.timer.cancel();
 					}
 					else{
 						TickBroadcast b = new TickBroadcast(currentTick);
@@ -72,6 +69,13 @@ public class TimeService extends MicroService{
 		timer.scheduleAtFixedRate(task, 0, speed);
 		
 		
-		
+		subscribeBroadcast(TerminationBroadcast.class, req -> {
+			System.out.println(" The timer received a termination request!!!!!!!!!!!!!!!!!!!!!!!!!!! ");
+			timer.cancel();
+			task.cancel();
+			System.out.println("CountDownLatch - counted down at "+getName());//debuuuug
+			endLatchObject.countDown();
+			terminate();
+		});
 	}
 }

@@ -95,6 +95,7 @@ public class ShoeStoreRunner {
 				for(int i=1; i<=sellingServicesNum; i++){
 					SellingService sellingService = new SellingService("seller "+i, startLatchObject, endLatchObject);
 					e.execute(sellingService);
+					
 				}
 				
 				//creating the clients
@@ -119,10 +120,15 @@ public class ShoeStoreRunner {
 				//Await the end
 				endLatchObject.await();
 				
+				//Terminate all threads
+				e.shutdown();
+				e.awaitTermination(2, TimeUnit.MINUTES);
 				
 				synchronized (Logger.class) {
-					storeInstance.print();
+					storeInstance.printReceiptsInHtmlFormat();
 				}
+				
+			
 				
 				
 				//e.shutdownNow();

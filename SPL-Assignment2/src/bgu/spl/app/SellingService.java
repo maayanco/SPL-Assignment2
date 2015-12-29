@@ -24,7 +24,7 @@ public class SellingService extends MicroService{
 		
 		currentTick=1; 
 		this.startLatchObject=startLatchObject;
-		startLatchObject.countDown();
+		/*startLatchObject.countDown();*/
 		this.endLatchObject=endLatchObject;
 	}
 
@@ -48,23 +48,22 @@ public class SellingService extends MicroService{
 				complete(req,receipt);
 			}
 			else if(res.equals(BuyResult.NOT_ON_DISCOUNT)){
+				System.out.println(getName()+"debuuug - Got Not In Stock");
 				log.log(Level.INFO, getName()+" couldn't complete the purchase request because there were no items on discount in the stock as requested ");
 				complete(req,null);
 			}
 			else if(res.equals(BuyResult.NOT_IN_STOCK)){
+				System.out.println(getName()+"debuuug - Got Not In Stock");
 				RestockRequest requestToRestock = new RestockRequest(req.getShoeType(),1, req.getRequestTick());
 				sendRequest(requestToRestock, reqq -> {
+					log.log(Level.INFO, getName()+" sent a request to restock ");
 					if(reqq){
-						log.log(Level.INFO, getName()+" sent a request to restock which was sucsessfull ");
-						//*********** not sure about this receipt thing... was not explicitly written in the assignment guidlines
 						Receipt receipt = new Receipt(this.getName(), req.getCustomer(), req.getShoeType(), req.isDiscount(), currentTick, req.getRequestTick(), req.getAmountSold());
 						storeInstance.file(receipt);
-						/*log.log(Level.SEVERE, "!!!111we are now going to perform complete on the purchaseOrderRequest:"+req+" with the receipt:"+receipt);
-						log.log(Level.SEVERE, "!!!222 gonna perform complete and maybe NullPointerException");*/
+						log.log(Level.INFO, getName()+" has completed the purchase order for "+req.getAmountSold()+" shoe of type "+req.getShoeType()+" which was issued originaly at tick: "+req.getRequestTick()+" by the customer "+req.getCustomer());
 						complete(req, receipt); ///Causes NullPointerExceptionnn
 					}
 					else{
-						log.log(Level.INFO, getName()+" sent a request to restock which wasn't succsessfull");
 						complete(req, null);
 					}
 				});
@@ -91,6 +90,8 @@ public class SellingService extends MicroService{
 		subscribeToTickBroadcast();		
 		subscribeToPurchaseOrderRequest();
 		subscribeToTerminationBroadcast();
+		startLatchObject.countDown();
+		
 	}
 
 }

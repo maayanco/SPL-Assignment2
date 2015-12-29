@@ -31,37 +31,15 @@ public class Store {
 	}
 	
 	
-	public BuyResult take(String shoeType, boolean onlyDiscount){
+	/*public BuyResult take(String shoeType, boolean onlyDiscount){
+		
 		//Go over the shoStorageArr
 		ShoeStorageInfo locatedShoe = null;
 		for(ShoeStorageInfo item : shoeStorageList){
 			if(item.getShoeType().equals(shoeType))
 				locatedShoe = item;
 		}
-		 
-		//no shoe was located of the type, or there is no amount of it on storage
-		if(locatedShoe==null || locatedShoe.getAmountOnStorage()==0) 
-			return BuyResult.NOT_IN_STOCK;
-		//if there is a request to take only with discount and there is no amount in stock
-		else if(onlyDiscount && (locatedShoe.getDiscountedAmount()==0))
-			return BuyResult.NOT_ON_DISCOUNT;
 		
-		else if(onlyDiscount && (locatedShoe.getDiscountedAmount()>0)){
-			int currentDiscountedAmount = locatedShoe.getDiscountedAmount();
-			int currentAmount = locatedShoe.getAmountOnStorage();
-			locatedShoe.setDiscountedAmount(currentDiscountedAmount-1);
-			locatedShoe.setAmountOnStorage(currentAmount-1);
-			return BuyResult.DISCOUNTED_PRICE;
-		}
-		
-		else if(!onlyDiscount && (locatedShoe.getAmountOnStorage()>0)){
-			int currentDiscountedAmount = locatedShoe.getDiscountedAmount();
-			int currentAmount = locatedShoe.getAmountOnStorage();
-			if(currentDiscountedAmount>0)
-				locatedShoe.setDiscountedAmount(currentDiscountedAmount-1);
-			locatedShoe.setAmountOnStorage(currentAmount-1);
-			return BuyResult.REGULAR_PRICE;
-		}
 		
 		//DEBUUUG TO FIND OUT WHY ARE WE RETURNING NULL
 		System.out.println("HELLLLO THIS IS THE STORE - WE ARE ABOUT TO RETURN NULL. You wanted show type: "+shoeType+" discount status: "+onlyDiscount);
@@ -75,7 +53,7 @@ public class Store {
 		printShoes();
 		return null;
 			
-	}
+	}*/
 	
 	public void add(String shoeType, int amount){
 		updateAmount(shoeType,amount,TYPE_REGULAR_AMOUNT);
@@ -91,6 +69,57 @@ public class Store {
 				return item;
 		}
 		return null;
+	}
+	
+	public BuyResult take(String shoeType, boolean onlyDiscount){
+		ShoeStorageInfo locatedShoe=locateShoeInStorage(shoeType);
+		
+		if(locatedShoe==null){
+			shoeStorageList.add(new ShoeStorageInfo(shoeType, 0, 0));
+			locatedShoe=locateShoeInStorage(shoeType);
+		}
+		
+		 //locatedShoe can't be null now!
+		if(onlyDiscount && locatedShoe.getDiscountedAmount()==0){ 
+			return BuyResult.NOT_ON_DISCOUNT;
+		}
+		else if(locatedShoe.getAmountOnStorage()==0){
+			System.out.println("debuuug- store is returning Not In Stock, the shoe you wanted: "+shoeType+" the discount status you wanted: "+onlyDiscount+" do we have this shoe: "+locatedShoe+" and the amount we have: "+locatedShoe.getAmountOnStorage()+" and the discounted amount we have of it: "+locatedShoe.getDiscountedAmount());
+			return BuyResult.NOT_IN_STOCK;
+		}
+		else if(onlyDiscount && locatedShoe.getDiscountedAmount()>0){
+			int currentDiscountedAmount = locatedShoe.getDiscountedAmount();
+			int currentAmount = locatedShoe.getAmountOnStorage();
+			locatedShoe.setDiscountedAmount(currentDiscountedAmount-1);
+			locatedShoe.setAmountOnStorage(currentAmount-1);
+			return BuyResult.DISCOUNTED_PRICE;
+		}
+		
+		else if(!onlyDiscount && locatedShoe.getAmountOnStorage()>0){
+			int currentDiscountedAmount = locatedShoe.getDiscountedAmount();
+			int currentAmount = locatedShoe.getAmountOnStorage();
+			if(currentDiscountedAmount>0)
+				locatedShoe.setDiscountedAmount(currentDiscountedAmount-1);
+			locatedShoe.setAmountOnStorage(currentAmount-1);
+			return BuyResult.REGULAR_PRICE;
+		}
+		
+		 
+		//DEBUUUG TO FIND OUT WHY ARE WE RETURNING NULL
+		System.out.println("HELLLLO THIS IS THE STORE - WE ARE ABOUT TO RETURN NULL. You wanted show type: "+shoeType+" discount status: "+onlyDiscount);
+		if(locatedShoe==null)
+			System.out.println("we haven't located your shoeType");
+		else{
+			System.out.println(" the params of the located shoe are: amountOnStorage:"+locatedShoe.getAmountOnStorage()+" type: "+locatedShoe.getShoeType()+" discountedAmount :"+locatedShoe.getDiscountedAmount());
+		}
+			System.out.println("what we have is:");
+				
+		printShoes();
+				
+		//end of debuuuug 
+		
+		return null;
+		
 	}
 	
 	private void updateAmount(String shoeType,int amountToAdd, String type){
@@ -132,11 +161,33 @@ public class Store {
 		
 	}
 	
+	public void printReceiptsInHtmlFormat(){
+		System.out.println("-------------------Receipts:-------------------");
+		System.out.println("<table border='1'>");
+		int index=1;
+		for(Receipt item : receiptList){
+			System.out.println("<tr><td>");
+			System.out.println("--------- receipt num: "+index+" <br>");
+			System.out.println("--------- seller: "+item.getSeller()+" <br>");
+			System.out.println("--------- customer: "+item.getCustomer()+" <br>");
+			System.out.println("--------- shoe type: "+item.getShoeType()+" <br>");
+			System.out.println("--------- discount: "+item.isDiscount()+" <br>");
+			System.out.println("--------- issued tick: "+item.getIssuedTick()+" <br>");
+			System.out.println("--------- Request tick: "+item.getRequestTick()+" <br>");
+			System.out.println("--------- Amount sold: "+item.getAmountSold()+" <br>");
+			System.out.println("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+			index++;
+			System.out.println("</td></tr>");
+		}
+		System.out.println("</table>");
+	}
+	
 	
 	private void printReceipts(){
 		System.out.println("-------------------Receipts:-------------------");
 		int index=1;
 		for(Receipt item : receiptList){
+			System.out.println("<tr><td>");
 			System.out.println("--------- receipt num: "+index);
 			System.out.println("--------- seller: "+item.getSeller());
 			System.out.println("--------- customer: "+item.getCustomer());
@@ -147,7 +198,7 @@ public class Store {
 			System.out.println("--------- Amount sold: "+item.getAmountSold());
 			System.out.println("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
 			index++;
-		}	
+		}
 	}
 	
 	public void print(){

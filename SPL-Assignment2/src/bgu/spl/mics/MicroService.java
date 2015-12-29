@@ -196,6 +196,7 @@ public abstract class MicroService implements Runnable {
 				}
 		}
 		
+		log.log(Level.INFO, getName()+" MicroService has unregistered - run should end and thread as well!!!");
 		messageBusInstance.unregister(this); 
 		
 	}
