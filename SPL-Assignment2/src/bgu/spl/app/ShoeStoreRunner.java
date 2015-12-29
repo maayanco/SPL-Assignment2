@@ -95,7 +95,6 @@ public class ShoeStoreRunner {
 				for(int i=1; i<=sellingServicesNum; i++){
 					SellingService sellingService = new SellingService("seller "+i, startLatchObject, endLatchObject);
 					e.execute(sellingService);
-					
 				}
 				
 				//creating the clients
