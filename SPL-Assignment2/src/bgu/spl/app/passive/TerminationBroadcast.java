@@ -19,7 +19,7 @@ public class TerminationBroadcast implements Broadcast{
 	/**
 	 * @return - true if a termination should occur, false otherwise.
 	 */
-	public boolean getToTerminate(){
+	public boolean getTerminationStatus(){
 		return shouldTerminate;
 	}
 	

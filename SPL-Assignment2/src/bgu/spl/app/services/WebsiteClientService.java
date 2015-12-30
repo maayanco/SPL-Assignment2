@@ -159,7 +159,7 @@ public class WebsiteClientService extends MicroService {
 	
 	private void subscribeToTerminationBroadcast(){
 		subscribeBroadcast(TerminationBroadcast.class, req -> {
-			if(req.getToTerminate()==true){
+			if(req.getTerminationStatus()==true){
 				log.log(Level.INFO, getName()+" has received a TerminationBroadcast and is terminating");
 				System.out.println("CountDownLatch - counted down at "+getName());//debuuuug
 				endLatchObject.countDown();
