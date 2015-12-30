@@ -2,35 +2,37 @@ package bgu.spl.app.passive;
 
 import bgu.spl.mics.Broadcast;
 
-//lital
-
+/**
+ * Broadcast message that is sent when the manager of the store decides to
+ * have a sale on a specific shoe
+ */
 public class NewDiscountBroadcast implements Broadcast{
+	
 	private String shoeType;
 	private int amountOnSale;
-	/*private int issuedTick; //really not sure we need this
-*/	
-	public  NewDiscountBroadcast(String shoeType, int amountOnSale/*, int issuedTick*/){
+	
+	/**
+	 * 
+	 * @param shoeType - the shoe type to be set on discount
+	 * @param amountOnSale - the amount of shoes to be set on sale
+	 */
+	public  NewDiscountBroadcast(String shoeType, int amountOnSale){
 		this.shoeType=shoeType;
 		this.amountOnSale=amountOnSale;
-		/*this.issuedTick=issuedTick;*/
 	}
+	
+	/**
+	 * @return - the shoe type to be set on discount
+	 */
 	public String getShoeType() {
 		return shoeType;
 	}
-	public void setShoeType(String shoeType) {
-		this.shoeType = shoeType;
-	}
+	
+	/**
+	 * @return - the amount of shoes to be set on sale
+	 */
 	public int getAmountOnSale() {
 		return amountOnSale;
 	}
-	public void setAmountOnSale(int amountOnSale) {
-		this.amountOnSale = amountOnSale;
-	}
-/*	public int getIssuedTick() {
-		return issuedTick;
-	}
-	public void setIssuedTick(int issuedTick) {
-		this.issuedTick = issuedTick;
-	}
-*/
+	
 }

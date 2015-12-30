@@ -21,7 +21,7 @@ public class SellingService extends MicroService{
 	private CountDownLatch startLatchObject;
 	private CountDownLatch endLatchObject;
 	
-	private static final Logger log = Logger.getLogger( MessageBusImpl.class.getName() );
+	private static final Logger log = Logger.getLogger( SellingService.class.getName() );
 	
 	public SellingService(String name, CountDownLatch startLatchObject, CountDownLatch endLatchObject) {
 		super(name);
@@ -54,12 +54,12 @@ public class SellingService extends MicroService{
 				complete(req,receipt);
 			}
 			else if(res.equals(BuyResult.NOT_ON_DISCOUNT)){
-				System.out.println(getName()+"debuuug - Got Not In Stock");
+				//System.out.println(getName()+"debuuug - Got Not In Stock");
 				log.log(Level.INFO, getName()+" couldn't complete the purchase request because there were no items on discount in the stock as requested ");
 				complete(req,null);
 			}
 			else if(res.equals(BuyResult.NOT_IN_STOCK)){
-				System.out.println(getName()+"debuuug - Got Not In Stock");
+				//System.out.println(getName()+"debuuug - Got Not In Stock");
 				RestockRequest requestToRestock = new RestockRequest(req.getShoeType(),1, req.getRequestTick());
 				sendRequest(requestToRestock, reqq -> {
 					log.log(Level.INFO, getName()+" sent a request to restock ");
@@ -83,7 +83,7 @@ public class SellingService extends MicroService{
 		subscribeBroadcast(TerminationBroadcast.class, req -> {
 			if(req.getToTerminate()==true){
 				log.log(Level.INFO, getName()+" has received a termination broadcast and is terminating..");
-				System.out.println("CountDownLatch - counted down at "+getName());//debuuuug
+				//System.out.println("CountDownLatch - counted down at "+getName());//debuuuug
 				endLatchObject.countDown();
 				terminate();
 			}

@@ -24,7 +24,7 @@ public class ShoeFactoryService extends MicroService{
 	private CountDownLatch endLatchObject;
 	private Store storeInstance = Store.getInstance();
 	
-	private static final Logger log = Logger.getLogger( MessageBusImpl.class.getName() );
+	private static final Logger log = Logger.getLogger( ShoeFactoryService.class.getName() );
 	
 	public ShoeFactoryService(String name, CountDownLatch startLatchObject, CountDownLatch endLatchObject) {
 		super(name);

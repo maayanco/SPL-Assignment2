@@ -19,7 +19,7 @@ public class TimeService extends MicroService{
 	private CountDownLatch startLatchObject;
 	private CountDownLatch endLatchObject;
 	
-	private static final Logger log = Logger.getLogger( MessageBusImpl.class.getName() );
+	private static final Logger log = Logger.getLogger( TimeService.class.getName() );
 	
 	
 	
@@ -38,9 +38,6 @@ public class TimeService extends MicroService{
 
 	@Override
 	protected void initialize(){
-		
-		
-		
 		Timer timer = new Timer();
 		
 		TimerTask task = new TimerTask() {
@@ -58,7 +55,6 @@ public class TimeService extends MicroService{
 						sendBroadcast(b);
 					}
 				}
-			
 		};
 		
 		try {
@@ -70,9 +66,7 @@ public class TimeService extends MicroService{
 		
 		timer.scheduleAtFixedRate(task, 0, speed);
 		
-		
 		subscribeBroadcast(TerminationBroadcast.class, req -> {
-			System.out.println(" The timer received a termination request!!!!!!!!!!!!!!!!!!!!!!!!!!! ");
 			timer.cancel();
 			task.cancel();
 			System.out.println("CountDownLatch - counted down at "+getName());//debuuuug

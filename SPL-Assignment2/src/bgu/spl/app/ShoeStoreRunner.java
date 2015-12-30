@@ -11,6 +11,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.google.gson.Gson;
@@ -37,13 +38,11 @@ public class ShoeStoreRunner {
 	private static final Store storeInstance = Store.getInstance();
 	
 	public static void main(String[] args){
-		
-		String jsonPath=args[0];
+		//Format the logs to be more readable 
+		System.setProperty("java.util.logging.SimpleFormatter.format","%1$tF %1$tT %4$s %2$s %5$s%6$s%n");
 
-		//here we can get exceptions thrown from the MicroService.. 
-		//what should we do with them??
-		//
-			try {
+		String jsonPath=args[0];
+		try {
 				
 				Gson gson = new Gson();
 				
@@ -131,9 +130,9 @@ public class ShoeStoreRunner {
 				e.shutdown();
 				e.awaitTermination(2, TimeUnit.MINUTES);
 				
-				synchronized (Logger.class) {
-					storeInstance.printReceiptsInHtmlFormat();
-				}
+				/*synchronized (Logger.class) {*/ //delete synchronized
+					storeInstance.print();
+				/*}*/
 				
 			
 				

@@ -26,7 +26,7 @@ public class WebsiteClientService extends MicroService {
 	private CountDownLatch startLatchObject;
 	private CountDownLatch endLatchObject;
 	
-	private static final Logger log = Logger.getLogger( MessageBusImpl.class.getName() );
+	private static final Logger log = Logger.getLogger( WebsiteClientService.class.getName() );
 	
 	public WebsiteClientService(String name, List<PurchaseSchedule> purchaseScheduleList, Set<String> wishListItems, CountDownLatch startLatchObject, CountDownLatch endLatchObject) {
 		
@@ -84,7 +84,7 @@ public class WebsiteClientService extends MicroService {
 				LinkedList<PurchaseSchedule> listOfPurchasesAtCurrentTick = mapTicksToPurchaseSchedules.get(currentTick);
 				
 				for(PurchaseSchedule futurePurchase : listOfPurchasesAtCurrentTick){
-					System.out.println(getName()+"my list of futurePurchases is of size: "+listOfPurchasesAtCurrentTick);
+					//System.out.println(getName()+"my list of futurePurchases is of size: "+listOfPurchasesAtCurrentTick);
 					PurchaseOrderRequest purchaseRequest = new PurchaseOrderRequest(this.getName(), futurePurchase.getShoeType(), false, currentTick, 1);
 					log.log(Level.INFO, "debug:"+purchaseRequest+getName()+" has sent a purchase request for "+purchaseRequest.getAmountSold()+" shoes of type "+purchaseRequest.getShoeType()+" at tick "+purchaseRequest.getRequestTick());
 					sendRequest(purchaseRequest, reqq -> {//should i check the content of the reqq??? check for null

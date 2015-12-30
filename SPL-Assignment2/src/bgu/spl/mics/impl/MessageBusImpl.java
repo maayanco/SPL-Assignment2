@@ -39,7 +39,7 @@ public class MessageBusImpl implements MessageBus{
 	public MessageBusImpl(){
 		
 		//setup logger
-		System.setProperty("java.util.logging.SimpleFormatter.format","%1$tF %1$tT %4$s %2$s %5$s%6$s%n");
+		//System.setProperty("java.util.logging.SimpleFormatter.format","%1$tF %1$tT %4$s %2$s %5$s%6$s%n");
 	
 		mapMicroServicesToQueues = new ConcurrentHashMap<MicroService, LinkedBlockingQueue<Message>>();
 		mapRequestTypesToMicroServices = new HashMap<Class<? extends Message>, RoundRobinList>();
@@ -125,7 +125,8 @@ public class MessageBusImpl implements MessageBus{
 			LinkedBlockingQueue mQueue = mapMicroServicesToQueues.get(m);
 			if(mQueue==null)
 				log.log(Level.SEVERE, "!!!!3333 mQueue is nulllll,the microservice m is: "+m.getName());
-			mQueue.add(new RequestCompleted<T>(r, result)); //NullPointerException here!!!
+			else
+				mQueue.add(new RequestCompleted<T>(r, result)); //NullPointerException here!!!
 		}
  	}
 

@@ -21,7 +21,7 @@ import bgu.spl.mics.impl.MessageBusImpl;
 public class ManagementService extends MicroService{
 	
 	private static final Store storeInstance = Store.getInstance();
-	private static final Logger log = Logger.getLogger( MessageBusImpl.class.getName() );
+	private static final Logger log = Logger.getLogger(ManagementService.class.getName() );
 	
 	private int currentTick;
 	/*private Map<Integer,DiscountSchedule> mapTicksToDiscountSchedules;*/
@@ -76,7 +76,7 @@ public class ManagementService extends MicroService{
 			if(mapTicksToDiscountSchedules.containsKey(currentTick)){
 				LinkedList<DiscountSchedule> listOfDiscounts = mapTicksToDiscountSchedules.get(currentTick);
 				for(DiscountSchedule discount: listOfDiscounts){
-					System.out.println("debugging a discount! currentTick: "+currentTick+" the type of the items to be on discount "+discount.getShoeType()+" the amount to be on discount: "+discount.getAmount()+" the tick on which the discount is to be performed: "+discount.getTick());
+					//System.out.println("debugging a discount! currentTick: "+currentTick+" the type of the items to be on discount "+discount.getShoeType()+" the amount to be on discount: "+discount.getAmount()+" the tick on which the discount is to be performed: "+discount.getTick());
 					NewDiscountBroadcast b = new NewDiscountBroadcast(discount.getShoeType(), discount.getAmount());
 					sendBroadcast(b);
 					log.log(Level.INFO, "The manager has sent a newDiscountBroadcast for "+b.getAmountOnSale()+" shoes of type "+b.getShoeType()+" the tick of sending: "+currentTick);
