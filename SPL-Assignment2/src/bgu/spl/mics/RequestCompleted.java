@@ -10,7 +10,8 @@ public class RequestCompleted<T> implements Message {
         this.result = result;
     }
 
-    public Request getCompletedRequest() {
+    @SuppressWarnings("rawtypes")
+	public Request getCompletedRequest() {
         return completed;
     }
 

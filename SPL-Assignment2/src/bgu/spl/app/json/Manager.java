@@ -1,6 +1,4 @@
-package bgu.spl.app;
-
-import bgu.spl.app.DiscountSchedule;
+package bgu.spl.app.json;
 
 public class Manager {
 	private Discount[] discountSchedule;

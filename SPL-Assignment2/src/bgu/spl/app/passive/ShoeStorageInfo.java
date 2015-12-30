@@ -1,4 +1,4 @@
-package bgu.spl.app;
+package bgu.spl.app.passive;
 
 public class ShoeStorageInfo {
 	private String shoeType;

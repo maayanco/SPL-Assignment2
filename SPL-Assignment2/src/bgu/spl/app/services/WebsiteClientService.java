@@ -1,19 +1,20 @@
-package bgu.spl.app;
+package bgu.spl.app.services;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import bgu.spl.mics.Message;
+import bgu.spl.app.passive.NewDiscountBroadcast;
+import bgu.spl.app.passive.PurchaseOrderRequest;
+import bgu.spl.app.passive.PurchaseSchedule;
+import bgu.spl.app.passive.TerminationBroadcast;
+import bgu.spl.app.passive.TickBroadcast;
 import bgu.spl.mics.MicroService;
 import bgu.spl.mics.impl.MessageBusImpl;
 

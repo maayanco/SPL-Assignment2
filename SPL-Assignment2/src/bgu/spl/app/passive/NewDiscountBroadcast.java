@@ -1,4 +1,4 @@
-package bgu.spl.app;
+package bgu.spl.app.passive;
 
 import bgu.spl.mics.Broadcast;
 

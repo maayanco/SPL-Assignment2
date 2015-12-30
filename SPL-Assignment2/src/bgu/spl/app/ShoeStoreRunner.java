@@ -1,31 +1,36 @@
 package bgu.spl.app;
 
-import com.google.gson.*;
-import com.google.gson.GsonBuilder;
-
-import bgu.spl.app.ManagementService;
-import bgu.spl.app.ShoeStorageInfo;
-import bgu.spl.app.Store;
-import bgu.spl.app.TimeService;
-import bgu.spl.app.*;
-import bgu.spl.app.SellingService;
-
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
+
+import com.google.gson.Gson;
+
+import bgu.spl.app.json.Customer;
+import bgu.spl.app.json.Discount;
+import bgu.spl.app.json.Manager;
+import bgu.spl.app.json.Service;
+import bgu.spl.app.json.Storage;
+import bgu.spl.app.json.StoreConfiguration;
+import bgu.spl.app.json.Time;
+import bgu.spl.app.passive.DiscountSchedule;
+import bgu.spl.app.passive.PurchaseSchedule;
+import bgu.spl.app.passive.ShoeStorageInfo;
+import bgu.spl.app.passive.Store;
+import bgu.spl.app.services.ManagementService;
+import bgu.spl.app.services.SellingService;
+import bgu.spl.app.services.ShoeFactoryService;
+import bgu.spl.app.services.TimeService;
+import bgu.spl.app.services.WebsiteClientService;
 
 public class ShoeStoreRunner {
 	
@@ -47,6 +52,8 @@ public class ShoeStoreRunner {
 				//convert the json string back to object
 				StoreConfiguration obj = gson.fromJson(br, StoreConfiguration.class);
 				
+				
+				System.out.println("speed:"+obj.getServices().getTime().getSpeed());
 				//Load the ShoeStorageInfo onto the store
 				Storage[] storage = obj.getInitialStorage();
 				ShoeStorageInfo[] shoeStorageInfo = new ShoeStorageInfo[storage.length];
@@ -114,6 +121,7 @@ public class ShoeStoreRunner {
 					WebsiteClientService client = new WebsiteClientService(item.getName(), purchaseScheduleList, wishList, startLatchObject, endLatchObject);
 					e.execute(client);
 				}
+				
 				
 				
 				//Await the end

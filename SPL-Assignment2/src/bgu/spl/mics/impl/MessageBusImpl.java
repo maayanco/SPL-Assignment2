@@ -1,19 +1,11 @@
 package bgu.spl.mics.impl;
 
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Queue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.logging.LoggingPermission;
-
-import javax.swing.text.StyledEditorKit.StyledTextAction;
-
 import bgu.spl.mics.Broadcast;
 import bgu.spl.mics.Message;
 import bgu.spl.mics.MessageBus;
@@ -109,6 +101,7 @@ public class MessageBusImpl implements MessageBus{
 	
 
 
+	/*@SuppressWarnings({ "rawtypes", "unchecked" })*/
 	@Override
 	/**
      * Notifying the MessageBus that the request {@code r} is completed and its
@@ -138,6 +131,7 @@ public class MessageBusImpl implements MessageBus{
 
 
 	
+	@SuppressWarnings("rawtypes")
 	@Override
 	/**
      * add the {@link Broadcast} {@code b} to the message queues of all the
@@ -301,6 +295,7 @@ public class MessageBusImpl implements MessageBus{
 	 * @param typeOfMessage - String indicating whether the removal should be from the 
 	 * 						  mapBroadcastTypesToMicroServices map or the mapRequestTypesToMicroServices map
 	 */
+	@SuppressWarnings("rawtypes")
 	private void removeMicroServiceFromMessageType(MicroService m, String typeOfMessage){
 		
 		Map<Class<? extends Message>,RoundRobinList> mapMessageTypesToMicroServices;
@@ -330,6 +325,7 @@ public class MessageBusImpl implements MessageBus{
 	 * @param m the MicroService requesting it's queue 
 	 * @return the queue which is mapped to {@code m}
  	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private LinkedBlockingQueue<Message> getQueueByMicroService(MicroService m){
 		
 		Iterator it = mapMicroServicesToQueues.entrySet().iterator();

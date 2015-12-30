@@ -1,4 +1,4 @@
-package bgu.spl.app;
+package bgu.spl.app.passive;
 
 import java.util.LinkedList;
 
@@ -105,19 +105,6 @@ public class Store {
 		}
 		
 		 
-		//DEBUUUG TO FIND OUT WHY ARE WE RETURNING NULL
-		System.out.println("HELLLLO THIS IS THE STORE - WE ARE ABOUT TO RETURN NULL. You wanted show type: "+shoeType+" discount status: "+onlyDiscount);
-		if(locatedShoe==null)
-			System.out.println("we haven't located your shoeType");
-		else{
-			System.out.println(" the params of the located shoe are: amountOnStorage:"+locatedShoe.getAmountOnStorage()+" type: "+locatedShoe.getShoeType()+" discountedAmount :"+locatedShoe.getDiscountedAmount());
-		}
-			System.out.println("what we have is:");
-				
-		printShoes();
-				
-		//end of debuuuug 
-		
 		return null;
 		
 	}

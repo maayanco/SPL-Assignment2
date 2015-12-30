@@ -29,7 +29,9 @@ public abstract class MicroService implements Runnable {
 
 	private static final Logger log = Logger.getLogger( MessageBusImpl.class.getName() );
 	private static final MessageBus messageBusInstance = MessageBusImpl.getInstance();
+	@SuppressWarnings("rawtypes")
 	private Map<Class<? extends Message>, Callback> mapMessageTypesToCallbacks = new HashMap<Class<? extends Message>, Callback>();
+	@SuppressWarnings("rawtypes")
 	private Map<Request<?>,Callback> mapRequestsToCallbacks = new HashMap<Request<?>,Callback>();
 	private boolean terminated = false;
 	private final String name;
@@ -166,6 +168,7 @@ public abstract class MicroService implements Runnable {
 	 * the entry point of the micro-service. 
 	 * otherwise you will end up in an infinite loop.
 	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public  final void run(){
 		

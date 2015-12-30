@@ -1,6 +1,5 @@
-package bgu.spl.app;
+package bgu.spl.app.services;
 
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +8,13 @@ import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import bgu.spl.app.passive.DiscountSchedule;
+import bgu.spl.app.passive.ManufacturingOrderRequest;
+import bgu.spl.app.passive.NewDiscountBroadcast;
+import bgu.spl.app.passive.RestockRequest;
+import bgu.spl.app.passive.Store;
+import bgu.spl.app.passive.TerminationBroadcast;
+import bgu.spl.app.passive.TickBroadcast;
 import bgu.spl.mics.MicroService;
 import bgu.spl.mics.impl.MessageBusImpl;
 

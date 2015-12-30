@@ -1,5 +1,7 @@
-package bgu.spl.app;
+package bgu.spl.app.services;
 
+import bgu.spl.app.passive.TerminationBroadcast;
+import bgu.spl.app.passive.TickBroadcast;
 import bgu.spl.mics.MicroService;
 import bgu.spl.mics.impl.MessageBusImpl;
 

@@ -1,9 +1,8 @@
-package bgu.spl.app;
+package bgu.spl.app.json;
 
-public class Discount {
+public class Storage {
 	private String shoeType;
 	private int amount;
-	private int tick;
 	
 	public String getShoeType(){
 		return shoeType;
@@ -11,9 +10,5 @@ public class Discount {
 	
 	public int getAmount(){
 		return amount;
-	}
-	
-	public int getTick(){
-		return tick;
 	}
 }

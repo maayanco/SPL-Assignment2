@@ -1,10 +1,16 @@
-package bgu.spl.app;
+package bgu.spl.app.services;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import bgu.spl.mics.Callback;
+import bgu.spl.app.passive.BuyResult;
+import bgu.spl.app.passive.PurchaseOrderRequest;
+import bgu.spl.app.passive.Receipt;
+import bgu.spl.app.passive.RestockRequest;
+import bgu.spl.app.passive.Store;
+import bgu.spl.app.passive.TerminationBroadcast;
+import bgu.spl.app.passive.TickBroadcast;
 import bgu.spl.mics.MicroService;
 import bgu.spl.mics.impl.MessageBusImpl;
 

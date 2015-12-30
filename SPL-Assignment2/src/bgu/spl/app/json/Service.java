@@ -1,4 +1,4 @@
-package bgu.spl.app;
+package bgu.spl.app.json;
 
 public class Service {
 	private Time time;

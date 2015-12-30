@@ -1,12 +1,6 @@
 package bgu.spl.mics;
 
-import java.util.Collection;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class RoundRobinList{
@@ -35,6 +29,7 @@ public class RoundRobinList{
 	}
 
 	
+	@SuppressWarnings("rawtypes")
 	public Iterator iterator() {
 		return list.iterator();
 	}
