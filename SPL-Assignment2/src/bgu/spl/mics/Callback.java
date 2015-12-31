@@ -6,6 +6,6 @@ package bgu.spl.mics;
  */
 public interface Callback<V> {
 
-    public void call(V c);
+	public void call(V c);
 
 }

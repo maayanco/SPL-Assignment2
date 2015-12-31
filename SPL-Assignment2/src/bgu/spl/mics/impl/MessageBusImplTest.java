@@ -1,67 +1,50 @@
 package bgu.spl.mics.impl;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import bgu.spl.mics.MicroService;
-import bgu.spl.mics.Request;
 import bgu.spl.mics.Broadcast;
 import bgu.spl.mics.Message;
-import bgu.spl.mics.MessageBus;
+import bgu.spl.mics.MicroService;
+import bgu.spl.mics.Request;
 
 public class MessageBusImplTest {
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
-		
-				
-		
-		class RequestImpl implements Request<String>{
-			
+
+		class RequestImpl implements Request<String> {
+
 		}
-		
-		class BroadcastImpl implements Broadcast{
-			
+
+		class BroadcastImpl implements Broadcast {
+
 		}
-		
-		
+
 		Request<?> r = new RequestImpl();
 		Broadcast b = new BroadcastImpl();
 	}
 
-	/*@AfterClass
-	public static void tearDownAfterClass() throws Exception {
-	}*/
+	/*
+	 * @AfterClass public static void tearDownAfterClass() throws Exception { }
+	 */
 
-	/*@Before
-	public void setUp() throws Exception {
-	}
+	/*
+	 * @Before public void setUp() throws Exception { }
+	 * 
+	 * @After public void tearDown() throws Exception { }
+	 * 
+	 * @Test public void testGetInstance() { fail("Not yet implemented"); }
+	 */
+	/*
+	 * @Test public void testMessageBusImpl() { fail("Not yet implemented"); }
+	 */
 
-	@After
-	public void tearDown() throws Exception {
-	}
-
-	@Test
-	public void testGetInstance() {
-		fail("Not yet implemented");
-	}
-*/
-	/*@Test
-	public void testMessageBusImpl() {
-		fail("Not yet implemented");
-	}
-*/
-	
-	
-	
 	@Test
 	public void testSubscribeRequest() {
-		class MicroServiceImpl extends MicroService{
+		class MicroServiceImpl extends MicroService {
 
 			public MicroServiceImpl(String name) {
 				super(name);
@@ -72,21 +55,20 @@ public class MessageBusImplTest {
 			protected void initialize() {
 				subscribeBroadcast();
 			}
-			
+
 		}
 
-		
 		MicroServiceImpl m = new MicroServiceImpl("ma");
-		
+
 		MessageBusImpl messageBusInstance = MessageBusImpl.getInstance();
 		try {
 			System.out.println("yooo lital how are you today, this is meee ");
-			
+
 			Message message = messageBusInstance.awaitMessage(m);
-			
+
 			message.wait(1);
-			
-			if(message==null)
+
+			if (message == null)
 				fail("yooooooooo Litalllllllllll what's upppppppppppppp");
 			else
 				fail("hhhhhhhh");

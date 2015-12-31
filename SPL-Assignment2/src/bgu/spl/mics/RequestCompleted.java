@@ -1,26 +1,43 @@
 package bgu.spl.mics;
 
+/**
+ * A message type that indicates a completion of a request with a certain
+ * result.
+ * 
+ * @param <T>
+ *            - the type of the result
+ */
 public class RequestCompleted<T> implements Message {
 
-    private Request<T> completed;
-    private T result;
+	private Request<T> completed;
+	private T result;
 
-    public RequestCompleted(Request<T> completed, T result) {
-        this.completed = completed;
-        this.result = result;
-    }
+	/**
+	 * 
+	 * @param completed
+	 *            - the request that was completed
+	 * @param result
+	 *            - the result of the request that was completed
+	 */
+	public RequestCompleted(Request<T> completed, T result) {
+		this.completed = completed;
+		this.result = result;
+	}
 
-    @SuppressWarnings("rawtypes")
+	/**
+	 * 
+	 * @return the request that was completed
+	 */
+	@SuppressWarnings("rawtypes")
 	public Request getCompletedRequest() {
-        return completed;
-    }
+		return completed;
+	}
 
-    public T getResult() {
-        return result;
-    }
-    
-    @Override
-    public String toString(){
-    	return "completed: "+completed+"result: "+result;
-    }
+	/**
+	 * 
+	 * @return the result of the current RequestCompleted
+	 */
+	public T getResult() {
+		return result;
+	}
 }

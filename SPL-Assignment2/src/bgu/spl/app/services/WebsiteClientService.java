@@ -16,164 +16,169 @@ import bgu.spl.app.passive.PurchaseSchedule;
 import bgu.spl.app.passive.TerminationBroadcast;
 import bgu.spl.app.passive.TickBroadcast;
 import bgu.spl.mics.MicroService;
-import bgu.spl.mics.impl.MessageBusImpl;
 
+/**
+ * This micro-service describes one client connected to the web-site. The
+ * WebsiteClientService expects to get two lists as arguments to its
+ * constructor: purchaseSchedule: List<PurchaseSchedule> - contains purchases
+ * that the client needs to make (every purchase has a corresponding time tick
+ * to send the PurchaseRequest). The list does not guaranteed to be sorted.
+ * Important: The WebsiteClientService will make the purchase on the tick
+ * specied on the schedule irrelevant of the discount on that item. wishList:
+ * Set<String> - The client wish list contains name of shoe types that the
+ * client will buy only when there is a discount on them (and immidiatly when he
+ * found out of such discount). Once the client bought a shoe from its wishlist
+ * - he removes it from the list. In order to get notified when new discount is
+ * available, the client should subscribe to the NewDiscountBroadcast message.
+ * If the client finish receiving all its purchases and have nothing in its
+ * wishList it must immidiatly terminate.
+ *
+ */
 public class WebsiteClientService extends MicroService {
-	
+
+	private static final Logger log = Logger.getLogger(WebsiteClientService.class.getName());
 	private Map<Integer, LinkedList<PurchaseSchedule>> mapTicksToPurchaseSchedules;
 	private Set<String> wishList;
 	private int currentTick;
 	private CountDownLatch startLatchObject;
 	private CountDownLatch endLatchObject;
-	
-	private static final Logger log = Logger.getLogger( WebsiteClientService.class.getName() );
-	
-	public WebsiteClientService(String name, List<PurchaseSchedule> purchaseScheduleList, Set<String> wishListItems, CountDownLatch startLatchObject, CountDownLatch endLatchObject) {
-		
+
+	/**
+	 * 
+	 * @param name
+	 * @param purchaseScheduleList
+	 * @param wishListItems
+	 * @param startLatchObject
+	 * @param endLatchObject
+	 */
+	public WebsiteClientService(String name, List<PurchaseSchedule> purchaseScheduleList, Set<String> wishListItems,
+			CountDownLatch startLatchObject, CountDownLatch endLatchObject) {
+
 		super(name);
-		
-		//Initialize the purchaseSchedule map and clone the received list
+
+		// Initialize the purchaseSchedule map
 		mapTicksToPurchaseSchedules = new HashMap<Integer, LinkedList<PurchaseSchedule>>();
-		for(PurchaseSchedule item : purchaseScheduleList){
+		for (PurchaseSchedule item : purchaseScheduleList) {
 			LinkedList<PurchaseSchedule> listOfPurchasesAtTick;
-			
-			if(mapTicksToPurchaseSchedules.containsKey(item.getTick())){
+			if (mapTicksToPurchaseSchedules.containsKey(item.getTick())) {
 				listOfPurchasesAtTick = mapTicksToPurchaseSchedules.get(item.getTick());
-			}
-			else{
+			} else {
 				listOfPurchasesAtTick = new LinkedList<PurchaseSchedule>();
 			}
-			
+
 			listOfPurchasesAtTick.add(item);
 			mapTicksToPurchaseSchedules.put(item.getTick(), listOfPurchasesAtTick);
 		}
-		
-		//Initialize the wishList and clone it
-		wishList = new HashSet<String>();
-		for(String item : wishListItems){
-			this.wishList.add(item);
-		}
-		
-		this.startLatchObject=startLatchObject;
-		/*startLatchObject.countDown();*/
-		this.endLatchObject=endLatchObject;
-		
-		log.log(Level.INFO, getName()+" client service was initialized");
-	}
-	
-	private void subscribeToTickBroadcast(){
-		
-		subscribeBroadcast(TickBroadcast.class, req -> {
-			currentTick=req.getTick();
-			/*synchronized (WebsiteClientService.class) {
-				if (currentTick == 12) {
-					System.out.println("~~~~~~~~~~~~``!!!!!!!!!! tick12 printout hiii i'm going to print what we have in the purchaseSchedule right now..");
-					
-					Iterator it = mapTicksToPurchaseSchedules.entrySet().iterator();
-					while(it.hasNext()){
-						Map.Entry pair = (Map.Entry)it.next();
-						System.out.print("service: "+getName()+pair.getKey()+" ||| "+pair.getValue());
-						System.out.println("");
-					}
 
-				}
-			}*/
-			
-			// mapTicksToPurchaseSchedules - it has 12 purchases! 
-			if(mapTicksToPurchaseSchedules.containsKey(currentTick)){
-				LinkedList<PurchaseSchedule> listOfPurchasesAtCurrentTick = mapTicksToPurchaseSchedules.get(currentTick);
-				
-				for(PurchaseSchedule futurePurchase : listOfPurchasesAtCurrentTick){
-					//System.out.println(getName()+"my list of futurePurchases is of size: "+listOfPurchasesAtCurrentTick);
-					PurchaseOrderRequest purchaseRequest = new PurchaseOrderRequest(this.getName(), futurePurchase.getShoeType(), false, currentTick, 1);
-					log.log(Level.INFO, "debug:"+purchaseRequest+getName()+" has sent a purchase request for "+purchaseRequest.getAmountSold()+" shoes of type "+purchaseRequest.getShoeType()+" at tick "+purchaseRequest.getRequestTick());
-					sendRequest(purchaseRequest, reqq -> {//should i check the content of the reqq??? check for null
-							listOfPurchasesAtCurrentTick.remove(futurePurchase);
-							if(listOfPurchasesAtCurrentTick.isEmpty())
-								mapTicksToPurchaseSchedules.remove(listOfPurchasesAtCurrentTick);
-					});					
-				}
-				
-				
-				/*for(PurchaseSchedule futurePurchase : listOfPurchasesAtCurrentTick){
-					System.out.println(getName()+"my list of futurePurchases is of size: "+listOfPurchasesAtCurrentTick);
-					PurchaseOrderRequest purchaseRequest = new PurchaseOrderRequest(this.getName(), futurePurchase.getShoeType(), false, currentTick, 1);
-					log.log(Level.INFO, "debug:"+purchaseRequest+getName()+" has sent a purchase request for "+purchaseRequest.getAmountSold()+" shoes of type "+purchaseRequest.getShoeType()+" at tick "+purchaseRequest.getRequestTick());
-					sendRequest(purchaseRequest, reqq -> {//should i check the content of the reqq??? check for null
-						// maybe this code should happen only if reqq!=null
-							//Delete from data structs
-						
-						System.out.println(" i am: "+getName()+" and i have sent a purchase request");
-							if(mapTicksToPurchaseSchedules.containsKey(currentTick)){
-								LinkedList<PurchaseSchedule> listOfPurchasesAtTick = mapTicksToPurchaseSchedules.get(currentTick);
-								for(PurchaseSchedule item: listOfPurchasesAtTick){
-									wishList.remove(item.getShoeType());
-								}
-								listOfPurchasesAtTick.remove(futurePurchase);
-								
-								if(listOfPurchasesAtTick.isEmpty())
-									mapTicksToPurchaseSchedules.remove(currentTick);
-							}
-						//complete(purchaseRequest,reqq); // this seems not good! //TODO: SEEMS LIKE THERE'S A BUG HERE
-					});
-					
-				}*/
-			}
-			
-			if(wishList.isEmpty() && mapTicksToPurchaseSchedules.isEmpty()){
-				log.log(Level.INFO, getName() +" has completed all it's purchases and wishList and is now terminating..");
-				System.out.println("CountDownLatch - counted down at "+getName());//debuuuug
-				endLatchObject.countDown();
-				terminate();
-			}
-		});
+		// Initialize the wishList
+		wishList = new HashSet<String>();
+		for (String item : wishListItems) {
+			wishList.add(item);
+		}
+
+		this.startLatchObject = startLatchObject;
+		this.endLatchObject = endLatchObject;
+		log.log(Level.INFO, getName() + " client service was initialized");
 	}
-	
-	
-	
-	private void subscribeToNewDiscountBroadcast(){
-		
-		subscribeBroadcast(NewDiscountBroadcast.class, req -> {
-			log.log(Level.INFO, getName()+" has received a new Discount Broadcast for "+req.getAmountOnSale()+" shoes of type "+req.getShoeType());
-			if(wishList.contains(req.getShoeType())){
-				PurchaseOrderRequest purchaseRequest = new PurchaseOrderRequest(this.getName() , req.getShoeType(), true ,currentTick, 1);
-				sendRequest(purchaseRequest, reqq -> {
-					log.log(Level.INFO, getName()+ " has sent a new purchase order for 1 shoe of type "+req.getShoeType());
-					//if(reqq!=null){
-					wishList.remove(req.getShoeType()); //TODO: Maybe this should be after the sendRequest
-					//}
-					//complete(purchaseRequest, reqq); //TODO: WHAT?? IS THIS WHAT SUPPOSED TO HAPPEN?
-				});
-				
-			}
-			
-			if(wishList.isEmpty() && mapTicksToPurchaseSchedules.isEmpty()){
-				log.log(Level.INFO, getName() +" has completed all it's purchases and wishList and is now terminating..");
-				System.out.println("CountDownLatch - counted down at "+getName());//debuuuug
-				endLatchObject.countDown();
-				terminate();
-			}
-			
-		});
-	}
-	
-	private void subscribeToTerminationBroadcast(){
-		subscribeBroadcast(TerminationBroadcast.class, req -> {
-			if(req.getTerminationStatus()==true){
-				log.log(Level.INFO, getName()+" has received a TerminationBroadcast and is terminating");
-				System.out.println("CountDownLatch - counted down at "+getName());//debuuuug
-				endLatchObject.countDown();
-				terminate();
-			}
-		});
-	}
-	
+
+	/**
+	 * This method handles TickBroadcasts, NewDiscountBroadcasts and
+	 * TerminationBroadcasts. each Message is handled by a dedicated helper
+	 * method.
+	 */
 	@Override
 	protected void initialize() {
 		subscribeToTickBroadcast();
 		subscribeToNewDiscountBroadcast();
 		subscribeToTerminationBroadcast();
 		startLatchObject.countDown();
+	}
+
+	/**
+	 * This method handles the TickBroadcasts every new TickBroadcast it
+	 * receives - it updates the current tick of the selling service. In
+	 * addition it checks the mapTicksToPurchaseSchedules if there is a purchase
+	 * that should occur at the certain tick and if so create and send a
+	 * purchase request.
+	 */
+	private void subscribeToTickBroadcast() {
+
+		subscribeBroadcast(TickBroadcast.class, tickBroadcast -> {
+			currentTick = tickBroadcast.getTick();
+			/* Check if a purchase should occur at the current tick */
+			if (mapTicksToPurchaseSchedules.containsKey(currentTick)) {
+				LinkedList<PurchaseSchedule> listOfPurchasesAtCurrentTick = mapTicksToPurchaseSchedules
+						.get(currentTick);
+				for (PurchaseSchedule futurePurchase : listOfPurchasesAtCurrentTick) {
+					PurchaseOrderRequest purchaseRequest = new PurchaseOrderRequest(this.getName(),
+							futurePurchase.getShoeType(), false, currentTick, 1);
+					log.log(Level.INFO,
+							getName() + " has sent a purchase request for " + purchaseRequest.getAmountSold()
+									+ " shoes of type " + purchaseRequest.getShoeType() + " at tick "
+									+ purchaseRequest.getRequestTick());
+					sendRequest(purchaseRequest, reqq -> {
+						listOfPurchasesAtCurrentTick.remove(futurePurchase);
+						if (listOfPurchasesAtCurrentTick.isEmpty())
+							mapTicksToPurchaseSchedules.remove(listOfPurchasesAtCurrentTick);
+					});
+				}
+			}
+			checkForEmptyLists();
+
+		});
+	}
+
+	/**
+	 * This method handles NewDiscountBroadcasts. for every new discount
+	 * broadcast received it checks if the wishList contains the provided shoe
+	 * type if so creates and sends a new purchase request. It removes that shoe
+	 * type from the wishList.
+	 */
+	private void subscribeToNewDiscountBroadcast() {
+		subscribeBroadcast(NewDiscountBroadcast.class, discountBroadcast -> {
+			log.log(Level.INFO, getName() + " has received a new Discount Broadcast for "
+					+ discountBroadcast.getAmountOnSale() + " shoes of type " + discountBroadcast.getShoeType());
+			if (wishList.contains(discountBroadcast.getShoeType())) {
+				PurchaseOrderRequest purchaseRequest = new PurchaseOrderRequest(this.getName(),
+						discountBroadcast.getShoeType(), true, currentTick, 1);
+				sendRequest(purchaseRequest, reqq -> {
+					log.log(Level.INFO, getName() + " has sent a new purchase order for 1 shoe of type "
+							+ discountBroadcast.getShoeType());
+					wishList.remove(discountBroadcast.getShoeType());
+				});
+			}
+			checkForEmptyLists();
+		});
+	}
+
+	/**
+	 * Checks if the wishList and mapTicksToPurchaseSchedules map are empty. If
+	 * so - terminate gracefully.
+	 */
+	private void checkForEmptyLists() {
+		if (wishList.isEmpty() && mapTicksToPurchaseSchedules.isEmpty()) {
+			log.log(Level.INFO, getName() + " has completed all it's purchases and wishList and is now terminating..");
+			endLatchObject.countDown();
+			terminate();
+		}
+	}
+
+	/**
+	 * This method handles TerminationBroadcasts, by starting a graceful
+	 * termination of the WebsiteClientService. Firstly It subscribes to
+	 * TerminationBroadcasts. When a new termination broadcast is received, we
+	 * invoke the end latch countDown to indicate the WebsiteClientService is
+	 * terminating, and call the terminate method in order to gracefully finish
+	 * running the service.
+	 */
+	private void subscribeToTerminationBroadcast() {
+		subscribeBroadcast(TerminationBroadcast.class, terminationBroadcast -> {
+			if (terminationBroadcast.getTerminationStatus() == true) {
+				log.log(Level.INFO, getName() + " has received a TerminationBroadcast and is terminating");
+				endLatchObject.countDown();
+				terminate();
+			}
+		});
 	}
 
 }
